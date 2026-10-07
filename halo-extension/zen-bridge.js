@@ -8,7 +8,7 @@
     const root = document.documentElement;
     const filtered = document.createElement('canvas');
     const context = filtered.getContext('2d',{willReadFrequently:true});
-    let revision = 0, cachedRevision = -1, cachedFilter = '', sequence = 0;
+    let revision = 0, cachedRevision = -1, sequence = 0;
     const observer = new MutationObserver(onChange);
     observer.observe(root,{attributes:true,attributeFilter:[requestAttribute]});
     function request() {
@@ -28,7 +28,7 @@
       return Math.min(1,start*f ? position/(start*f) : 1,end*f ? (size-position)/(end*f) : 1);
     }
     function publish(details) {
-      const {canvas,projection,geometry,settings,blurRadii,directionalBlur,picture,frameReady}=details;
+      const {canvas,projection,geometry,settings,picture,frameReady}=details;
       const consumer = request();
       if (!consumer || !settings.zenTabs || !frameReady || document.hidden || document.fullscreenElement || !geometry) {
         clear(); return;
@@ -38,13 +38,14 @@
       const box = projection.getBoundingClientRect();
       if (!box.width || !box.height) { clear(); return; }
       const scale = canvas.width/box.width;
-      const filter = `blur(${directionalBlur ? 0 : blurRadii[0]*scale}px) saturate(${settings.saturation}%) brightness(${settings.brightness}%)`;
       try {
-        if (cachedRevision !== revision || cachedFilter !== filter || filtered.width !== canvas.width || filtered.height !== canvas.height) {
+        if (cachedRevision !== revision || filtered.width !== canvas.width || filtered.height !== canvas.height) {
           // Resizing also resets the origin-clean flag after protected media.
           filtered.width = canvas.width; filtered.height = canvas.height;
-          context.filter = filter; context.drawImage(canvas,0,0);
-          cachedRevision = revision; cachedFilter = filter;
+          // Read the exact filtered pixels displayed on the page. Recomputing
+          // blur here creates a visible colour break at Zen's sidebar edge.
+          context.drawImage(canvas,0,0);
+          cachedRevision = revision;
         }
         const x = consumer.edge*innerWidth + (consumer.side === 'left' ? -.5 : .5);
         const column = Math.floor((x-box.left)*scale);

@@ -42,6 +42,8 @@
   const frame = document.createElement('canvas');
   const projected = document.createElement('canvas');
   const projectedCtx = projected.getContext('2d');
+  const blurred = document.createElement('canvas');
+  const blurredCtx = blurred.getContext('2d');
   const edgeBlur = globalThis.HaloBlur.create();
   const sampleCtx = sample.getContext('2d', { willReadFrequently: true });
   const frameCtx = frame.getContext('2d');
@@ -163,7 +165,7 @@
     rawPrevious = null; detectedCrop = fullCrop; cropCandidate = ''; cropCount = 0; frameReady = false;
     // Assigning width also clears a canvas's origin-clean flag after a tainted source.
     sample.width = sample.width; canvas.width = canvas.width; frame.width = frame.width;
-    projected.width = projected.width; edgeBlur.reset();
+    projected.width = projected.width; blurred.width = blurred.width; edgeBlur.reset();
     if (backdropCanvas) backdropCanvas.width = backdropCanvas.width;
   }
   function deactivate() {
@@ -178,7 +180,9 @@
   function applyAppearance() {
     blurRadii = globalThis.HaloSettings.blurRadii(settings);
     directionalBlur = !blurRadii.every(radius => radius === blurRadii[0]);
-    canvas.style.filter = `blur(${directionalBlur ? 0 : blurRadii[0]}px) saturate(${settings.saturation}%) brightness(${settings.brightness}%)`;
+    // Bake the visible filter into the pixels shared with the Zen tab bridge.
+    // CSS and Canvas blur otherwise produce slightly different edge colours.
+    canvas.style.filter = 'none';
     projection.style.opacity = String(settings.intensity / 100);
   }
   function clearPlayerCorners() {
@@ -385,7 +389,7 @@
   }
   function publishZen(force=false) {
     if (!active) return zenBridge.clear();
-    zenBridge.publish({canvas,projection,geometry,settings,blurRadii,directionalBlur,
+    zenBridge.publish({canvas,projection,geometry,settings,
       picture:lightPicture,frameReady:frameReady && readable},force);
   }
   function queueLayout() {
@@ -399,13 +403,21 @@
     const scale = geometry.scale;
     const width = Math.max(1,Math.round(w*scale)), height = Math.max(1,Math.round(h*scale));
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+    if(projected.width!==width||projected.height!==height){projected.width=width;projected.height=height;}
+    renderer.paint(projectedCtx,frame,settings.autoBars ? detectedCrop : fullCrop,geometry,settings.projection);
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,width,height);
     if (directionalBlur) {
-      if(projected.width!==width||projected.height!==height){projected.width=width;projected.height=height;}
-      renderer.paint(projectedCtx,frame,settings.autoBars ? detectedCrop : fullCrop,geometry,settings.projection);
-      edgeBlur.render(projected,ctx,geometry,blurRadii);
+      if(blurred.width!==width||blurred.height!==height){blurred.width=width;blurred.height=height;}
+      edgeBlur.render(projected,blurredCtx,geometry,blurRadii);
+      ctx.filter=`saturate(${settings.saturation}%) brightness(${settings.brightness}%)`;
+      ctx.drawImage(blurred,0,0);
     } else {
-      renderer.paint(ctx,frame,settings.autoBars ? detectedCrop : fullCrop,geometry,settings.projection);
+      ctx.filter=`blur(${blurRadii[0]*scale}px) saturate(${settings.saturation}%) brightness(${settings.brightness}%)`;
+      ctx.drawImage(projected,0,0);
     }
+    ctx.restore();
     copyTwitchFrame();
     zenBridge.changed(); publishZen(forceBridge);
   }

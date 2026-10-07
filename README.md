@@ -24,7 +24,7 @@ To disable the effect, turn off **Light up tabs** in Halora or disable the mod i
 
 ## Privacy and compatibility
 
-The connection stays inside the browser. It passes small RGBA color strips sampled from the halo edges and the dimming level, not complete video frames. It does not send them to a remote service. The extension stores settings in `browser.storage.local`, validates them when loading, and applies defaults for missing values. Import replaces the current profiles only after the JSON file passes format and value checks. Some protected videos prevent pixel sampling; Halora reports this in the popup.
+The connection stays inside the browser. It passes small RGBA color strips sampled from the already filtered page halo and the dimming level, not complete video frames. The page and Zen tabs therefore use the same blur and color grading instead of calculating those effects separately. It does not send them to a remote service. The extension stores settings in `browser.storage.local`, validates them when loading, and applies defaults for missing values. Import replaces the current profiles only after the JSON file passes format and value checks. Some protected videos prevent pixel sampling; Halora reports this in the popup.
 
 The mod temporarily adjusts the active web container's shadow and corner clipping so dark seams do not interrupt the light at Zen's edges. Those styles are restored when the effect stops. Split views and some compact Zen layouts have not been verified. The current implementation has been exercised in automated browser and interface fixtures, but this release has not been inspected in every live Zen layout.
 

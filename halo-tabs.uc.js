@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.6
+// @version        0.1.7
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
