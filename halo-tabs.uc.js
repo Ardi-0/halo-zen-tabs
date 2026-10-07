@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.7
+// @version        0.1.8
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -325,7 +325,9 @@
           data.data.uri!==browser.currentURI.spec)return;
         if(!valid(data.data)){hide();return;}
         if(lastProfile && data.data.profile.seq < lastProfile.profile.seq)return;
-        lastProfile=data.data;queueDraw();
+        // The content process already rendered this frame. Paint on receipt;
+        // waiting for another chrome animation frame visibly trails the page.
+        lastProfile=data.data;paint();
       }};
       manager.addMessageListener(messageName,listener);transports.set(browser,{manager,listener});
     }
@@ -348,7 +350,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.4'})});
+      error:lastError,version:'0.1.8'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
