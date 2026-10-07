@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halo Tabs pour Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.3
+// @version        0.1.4
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -19,6 +19,8 @@
       opacity:0;transition:opacity 180ms ease-out; }
     #tabbrowser-tabpanels .browserSidebarContainer[data-halo-zen-clear-shadow] {
       box-shadow:none!important;
+      border-radius:0!important;
+      corner-shape:square!important;
     }
     #halo-zen-edge-top, #halo-zen-edge-bottom, #halo-zen-edge-left, #halo-zen-edge-right {
       position:fixed!important;display:block!important;pointer-events:none!important;
@@ -336,7 +338,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.3'})});
+      error:lastError,version:'0.1.4'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);

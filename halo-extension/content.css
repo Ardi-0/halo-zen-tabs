@@ -70,6 +70,15 @@ html[data-halo-active][data-halo-site="twitch"] #root {
   position: relative !important;
   z-index: 1 !important;
 }
+/* Twitch's main content shell can have its own clipped corners beneath the
+   navigation. Keep the video and chat rounding, but square this outer shell
+   so no dark desktop wedge shows through the ambient background. */
+html[data-halo-active][data-halo-site="twitch"] .twilight-main,
+html[data-halo-active][data-halo-site="twitch"] .root-scrollable,
+html[data-halo-active][data-halo-site="twitch"] .root-scrollable__wrapper,
+html[data-halo-active][data-halo-site="twitch"] .channel-root {
+  border-radius: 0 !important;
+}
 /* These markers follow actual structural paths, including unnamed wrappers.
    Inline background priorities and restoration are handled by the script. */
 [data-halo-twitch-underlay],

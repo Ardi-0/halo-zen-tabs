@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Halo — Ambient transparent pour Zen",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "description": "Prolonge les images YouTube et Twitch dans un halo flouté, avec transparence et assombrissement indépendants.",
   "permissions": ["storage", "https://www.youtube.com/*", "https://www.twitch.tv/*"],
   "browser_specific_settings": {

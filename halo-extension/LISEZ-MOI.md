@@ -1,4 +1,4 @@
-# Halo pour Zen — version 0.2.16
+# Halo pour Zen — version 0.2.20
 
 Une extension autonome pour prolonger les **bords des vidéos YouTube et Twitch** autour du lecteur, avec flou et disparition progressive dans la transparence de Zen. Les couleurs gardent leur position le long de chaque bord quand l’étendue change. Le halo suit la vidéo, avec une cadence maximale et un lissage réglables.
 
@@ -41,6 +41,8 @@ Les dégradés noirs des commandes Twitch sont désormais dessinés seulement su
 La version **0.2.15** ajoute la liaison optionnelle au complément **Halo Tabs pour Zen 0.1.0**, à charger avec Sine. Une fine bande de couleurs du halo prolonge la lumière derrière les onglets aux mêmes hauteurs, avec l’alpha et l’assombrissement du raccord. La section **Onglets Zen** règle son activation, son intensité et son atténuation vers le bord extérieur. À 100 % d’intensité, la bande conserve la lumière du bord de page. Les préréglages préservent ces choix. Sans complément connecté, cette liaison ne calcule ni ne transmet de bande supplémentaire. Les permissions de l’extension restent identiques.
 
 La version **0.2.16** transmet au complément chaque image calculée pour le halo de la page. L’ancienne limite supplémentaire de 16 images par seconde pouvait décaler les couleurs derrière les onglets lors des mouvements rapides. La fréquence reste celle choisie dans le réglage principal de Halo.
+
+La version **0.2.20** rend carré le grand panneau de Twitch sous la navigation lorsque le halo est actif. Avec **Halo Tabs pour Zen 0.1.4**, le conteneur web du navigateur perd aussi son arrondi pendant l’effet. Ces deux découpes pouvaient laisser voir des quarts de cercle sombres. Le lecteur vidéo et le chat conservent leurs propres coins arrondis ; la désactivation restaure les styles natifs.
 
 Le complément est livré séparément avec un installateur local pour Sine existant. Il ajoute une couche lumineuse et conserve les variables de couleur du thème de Zen. Il ne peut pas être installé depuis la boîte des extensions Firefox : son chargement se fait dans Sine. Voir le README du paquet **Halo Tabs** pour l’ajout, la sauvegarde et la désactivation.
 
