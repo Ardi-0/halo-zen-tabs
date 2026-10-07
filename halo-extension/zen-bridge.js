@@ -3,7 +3,7 @@
   'use strict';
   const requestAttribute = 'data-halo-zen-consumer';
   const profileAttribute = 'data-halo-zen-profile';
-  const count = 192;
+  const count = 192, across = 128;
   function create(onChange) {
     const root = document.documentElement;
     const filtered = document.createElement('canvas');
@@ -54,12 +54,7 @@
         const rgba = [], dim = [], g = geometry, f = settings.feather/100;
         const width = g.width+g.left+g.right, height = g.height+g.top+g.bottom;
         const horizontal = mask(g.view.x+x-box.left,width,g.left,g.right,f);
-        for (let i=0;i<count;i++) {
-          const y = y0+i*step, row = Math.floor((y-box.top)*filtered.height/box.height);
-          const alpha = horizontal*mask(g.view.y+y-box.top,height,g.top,g.bottom,f)*settings.intensity/100;
-          const offset = row*4;
-          if (pixels && row >= 0 && row < filtered.height) rgba.push(pixels[offset],pixels[offset+1],pixels[offset+2],Math.round(pixels[offset+3]*alpha));
-          else rgba.push(0,0,0,0);
+        function darknessAt(x,y) {
           let darkness = settings.dim/100;
           if (settings.dimMode === 'local') {
             const extent = Math.max(160,settings.spread);
@@ -67,10 +62,38 @@
               (y-picture.top-picture.height/2)/(picture.height/2+extent));
             darkness *= Math.min(1,Math.max(0,(1-distance)/.7));
           }
-          dim.push(Math.round(darkness*255));
+          return Math.round(darkness*255);
         }
+        for (let i=0;i<count;i++) {
+          const y = y0+i*step, row = Math.floor((y-box.top)*filtered.height/box.height);
+          const alpha = horizontal*mask(g.view.y+y-box.top,height,g.top,g.bottom,f)*settings.intensity/100;
+          const offset = row*4;
+          if (pixels && row >= 0 && row < filtered.height) rgba.push(pixels[offset],pixels[offset+1],pixels[offset+2],Math.round(pixels[offset+3]*alpha));
+          else rgba.push(0,0,0,0);
+          dim.push(darknessAt(x,y));
+        }
+        function sampleRow(y) {
+          const row = Math.floor((y-box.top)*filtered.height/box.height);
+          const pixels = row >= 0 && row < filtered.height ? context.getImageData(0,row,filtered.width,1).data : null;
+          const colours = [], shade = [];
+          for (let i=0;i<across;i++) {
+            const x = i*(innerWidth-1)/(across-1);
+            const column = Math.floor((x-box.left)*scale);
+            const alpha = mask(g.view.x+x-box.left,width,g.left,g.right,f)*
+              mask(g.view.y+y-box.top,height,g.top,g.bottom,f)*settings.intensity/100;
+            const offset = column*4;
+            if (pixels && column >= 0 && column < filtered.width)
+              colours.push(pixels[offset],pixels[offset+1],pixels[offset+2],Math.round(pixels[offset+3]*alpha));
+            else colours.push(0,0,0,0);
+            shade.push(darknessAt(x,y));
+          }
+          return [colours,shade];
+        }
+        const [top,topDim] = sampleRow(0);
+        const [bottom,bottomDim] = sampleRow(innerHeight-1);
         root.setAttribute(profileAttribute,JSON.stringify({v:1,seq:++sequence,side:consumer.side,
-          height:innerHeight,y0,step,rgba,dim,strength:settings.zenTabsIntensity,fade:settings.zenTabsFade}));
+          height:innerHeight,y0,step,rgba,dim,across,top,bottom,topDim,bottomDim,
+          strength:settings.zenTabsIntensity,fade:settings.zenTabsFade}));
       } catch {
         // A tainted canvas must never turn into a new screenshot/capture path.
         clear();

@@ -8,10 +8,12 @@ Mod [Sine](https://github.com/CosmoCreeper/Sine) qui prolonge la lumière de l�
 2. Ajoute **le contenu de ce dossier** à la racine du dépôt. `theme.json`, `halo-tabs.uc.js` et `preferences.json` doivent être directement visibles sur GitHub.
 3. Dans Sine, installe le mod depuis l’URL du dépôt, par exemple `https://github.com/TON-COMPTE/halo-zen-tabs`.
 4. Sine doit autoriser les scripts des dépôts personnels pour charger ce mod JavaScript. Active cette possibilité dans Sine si le mod apparaît mais que son script ne s’exécute pas, puis redémarre Zen si Sine le demande.
-5. Charge aussi l’extension Firefox **Halo 0.2.16** fournie dans `halo-extension/`. Pour un chargement temporaire, ouvre `about:debugging#/runtime/this-firefox`, choisis **Charger un module complémentaire temporaire…** et sélectionne `halo-extension/manifest.json`. Un module temporaire doit être rechargé après chaque redémarrage de Zen.
+5. Charge aussi l’extension Firefox **Halo 0.2.17** fournie dans `halo-extension/`. Pour un chargement temporaire, ouvre `about:debugging#/runtime/this-firefox`, choisis **Charger un module complémentaire temporaire…** et sélectionne `halo-extension/manifest.json`. Un module temporaire doit être rechargé après chaque redémarrage de Zen.
 6. Ouvre une vidéo YouTube ou Twitch. Dans le panneau Halo, la section **Onglets Zen** doit afficher **Complément Zen connecté**.
 
 Le mod Sine ajoute la lumière dans l’interface de Zen. L’extension Firefox capture les bords de la vidéo et fournit les couleurs ; les deux sont nécessaires.
+
+La version **Halo Tabs 0.1.1** remplit aussi les marges supérieure et inférieure et les coins arrondis de la vue web avec les couleurs correspondant à leur position. Elle retire temporairement l’ombre sombre de la vue vidéo active. Ces changements sont limités à la page active pendant que Halo fonctionne et sont retirés en quittant la vidéo ou en désactivant l’effet. La version **Halo 0.2.17** fournit les bandes de couleurs horizontales nécessaires ; avec une ancienne version, l’éclairage des onglets reste compatible mais les marges ne sont pas remplies.
 
 ## Réglages
 
@@ -26,6 +28,8 @@ La liaison entre Halo et le mod reste dans le navigateur : elle transmet une ban
 Depuis Halo 0.2.16, cette bande est transmise à chaque image calculée par le halo de la page. Le complément n’ajoute plus sa propre limite de 16 images par seconde, qui pouvait retarder les couleurs dans les onglets.
 
 Le code a été validé dans un banc de test simulant l’interface native, la page et leur liaison. Il n’a pas encore été testé dans le profil Zen de l’utilisateur. Les vues divisées et certains modes compacts restent à confirmer.
+
+Le cadre extérieur de la fenêtre, situé hors de la surface de Zen, ne peut pas être recoloré par ce mod. Les marges et coins à l’intérieur de la fenêtre sont couverts par le nouveau calque.
 
 Pour désactiver l’effet, décoche l’option dans Halo ou la préférence du mod Sine. Pour retirer le script, désinstalle le mod depuis Sine et redémarre Zen.
 
