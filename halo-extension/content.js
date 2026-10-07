@@ -449,7 +449,7 @@
         catch (error) {
           if (error.name !== 'SecurityError') throw error;
           readable = false;
-          warning = 'La vidéo limite la lecture des pixels : halo direct, sans lissage ni noirs transparents.';
+          warning = 'Pixel access is blocked for this video. Using direct projection without smoothing or transparent blacks.';
           detectedCrop = fullCrop; layout();
         }
         if (pixels) {
@@ -476,7 +476,7 @@
       frameReady = true; projectFrame(immediateBridge);
       rendered++;
     } catch (error) {
-      warning = 'Images indisponibles pour cette vidéo (chargement ou contenu protégé).';
+      warning = 'Video frames are unavailable (still loading or protected content).';
       ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0, 0, canvas.width, canvas.height); frameReady = false;
       copyTwitchFrame();
       zenBridge.clear();
@@ -530,8 +530,8 @@
       zenTabsConnected:!!zenBridge.request(),
       projection: settings.projection, sceneCutCount, detectedCrop,
       video: !!video, paused: video?.paused ?? true,
-      message: !settings.enabled ? 'Halo désactivé' : active ? `Synchronisé avec les images de ${site.name}` :
-        !site.isWatchPage() ? `Ouvre ${site.id === 'twitch' ? 'un direct ou une rediffusion Twitch' : 'une vidéo YouTube'} pour voir le halo` : 'En attente d’un lecteur visible dans un mode autorisé' };
+      message: !settings.enabled ? 'Halora disabled' : active ? `Synced with ${site.name} video frames` :
+        !site.isWatchPage() ? `Open ${site.id === 'twitch' ? 'a Twitch stream or replay' : 'a YouTube video'} to see the halo` : 'Waiting for a visible player in an enabled mode' };
   }
   api.runtime.onMessage.addListener(message => {
     if (message?.type === 'halo-status') return Promise.resolve(status());
@@ -573,5 +573,5 @@
   api.storage.local.get(['halo','haloSeparateSites','haloYoutube','haloTwitch']).then(result => {
     storedSettings = result; settings = resolveStorage(storedSettings, site.id);
     ready = true; applyAppearance(); findVideo();
-  }).catch(() => { ready = true; warning = 'Réglages non accessibles : valeurs par défaut.'; applyAppearance(); findVideo(); });
+  }).catch(() => { ready = true; warning = 'Settings unavailable: using defaults.'; applyAppearance(); findVideo(); });
 })();

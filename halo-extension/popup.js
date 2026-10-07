@@ -9,32 +9,32 @@
   let activeSite = null, tabId = null, edited = false, pendingWrite = null, writing = false;
 
   const controls = [
-    ['light','spread','Étendue',' px',5], ['light','intensity','Intensité',' %',1],
-    ['light','blur','Flou général',' px',1], ['dim','dim','Assombrissement',' %',1],
-    ['player','playerRadius','Arrondi du lecteur',' px',1],
-    ['chat','twitchChatOpacity','Opacité du chat',' %',1],
-    ['zen-tabs','zenTabsIntensity','Intensité dans les onglets',' %',1],
-    ['zen-tabs','zenTabsFade','Atténuation extérieure',' %',1],
-    ['advanced','saturation','Saturation',' %',1], ['advanced','brightness','Luminosité',' %',1],
-    ['advanced','feather','Fondu des bords',' %',1], ['advanced','smoothing','Lissage',' ms',10],
-    ['direction','top','En haut',' %',5], ['direction','right','À droite',' %',5],
-    ['direction','bottom','En bas',' %',5], ['direction','left','À gauche',' %',5],
-    ['blur-direction','blurTop','Flou en haut',' %',5], ['blur-direction','blurRight','Flou à droite',' %',5],
-    ['blur-direction','blurBottom','Flou en bas',' %',5], ['blur-direction','blurLeft','Flou à gauche',' %',5],
-    ['crop','cropY','Retirer en haut et en bas',' %',1], ['crop','cropX','Retirer à gauche et à droite',' %',1],
-    ['performance','fps','Cadence maximale',' images/s',1], ['performance','resolution','Résolution du halo',' px',32]
+    ['light','spread','Reach',' px',1], ['light','intensity','Intensity',' %',.1],
+    ['light','blur','General blur',' px',1], ['dim','dim','Dimming',' %',.1],
+    ['player','playerRadius','Player corner radius',' px',1],
+    ['chat','twitchChatOpacity','Chat opacity',' %',.1],
+    ['zen-tabs','zenTabsIntensity','Tab light intensity',' %',.1],
+    ['zen-tabs','zenTabsFade','Fade toward outer edge',' %',.1],
+    ['advanced','saturation','Saturation',' %',.1], ['advanced','brightness','Brightness',' %',.1],
+    ['advanced','feather','Edge feathering',' %',.1], ['advanced','smoothing','Smoothing',' ms',1],
+    ['direction','top','Top',' %',.1], ['direction','right','Right',' %',.1],
+    ['direction','bottom','Bottom',' %',.1], ['direction','left','Left',' %',.1],
+    ['blur-direction','blurTop','Top blur',' %',.1], ['blur-direction','blurRight','Right blur',' %',.1],
+    ['blur-direction','blurBottom','Bottom blur',' %',.1], ['blur-direction','blurLeft','Left blur',' %',.1],
+    ['crop','cropY','Crop top and bottom',' %',.1], ['crop','cropX','Crop left and right',' %',.1],
+    ['performance','fps','Maximum frame rate',' fps',1], ['performance','resolution','Halo resolution',' px',1]
   ];
   const current = () => separate ? profiles[selectedSite] : shared;
   const currentKey = () => separate ? siteKeys[selectedSite] : 'halo';
   function withTimeout(promise, milliseconds) {
     let timer;
-    return Promise.race([promise,new Promise((_,reject) => {timer=setTimeout(() => reject(new Error('Délai dépassé')),milliseconds);})])
+    return Promise.race([promise,new Promise((_,reject) => {timer=setTimeout(() => reject(new Error('Timed out')),milliseconds);})])
       .finally(() => clearTimeout(timer));
   }
   function save(payload) {
     edited = true;
     pendingWrite = { ...pendingWrite, ...payload };
-    $('saved').textContent = 'Enregistrement…';
+    $('saved').textContent = 'Saving…';
     if (!writing) void flushWrites();
   }
   async function flushWrites() {
@@ -44,9 +44,9 @@
       pendingWrite = null;
       try {
         await api.storage.local.set(payload);
-        $('saved').textContent = 'Réglages enregistrés';
+        $('saved').textContent = 'Settings saved';
       } catch {
-        $('saved').textContent = 'Enregistrement impossible · réessaie';
+        $('saved').textContent = 'Could not save · try again';
       }
     }
     writing = false;
@@ -55,9 +55,9 @@
   function saveProfile() { save({ [currentKey()]: normalize(current()) }); }
   function reflect() {
     const settings = current();
-    for (const [,key,,unit] of controls) {
+    for (const [,key] of controls) {
       $(key).value = settings[key];
-      $(key+'-value').textContent = settings[key]+unit;
+      $(key+'-number').value = settings[key];
     }
     for (const key of ['enabled','transparentBlacks','autoBars','sceneCuts','standard','theater','fullscreen','twitchChatGlass','zenTabs']) $(key).checked = settings[key];
     $('separateSites').checked = separate;
@@ -68,12 +68,12 @@
       button.setAttribute('aria-pressed',String(active));
     });
     $('profile-note').textContent = separate ?
-      `Tu modifies uniquement ${selectedSite === 'youtube' ? 'YouTube' : 'Twitch'}.` :
-      'Les modifications s’appliquent aux deux sites.';
-    $('reset').textContent = separate ? `Réinitialiser ${selectedSite === 'youtube' ? 'YouTube' : 'Twitch'}` : 'Réinitialiser';
+      `Editing ${selectedSite === 'youtube' ? 'YouTube' : 'Twitch'} only.` :
+      'Changes apply to both sites.';
+    $('reset').textContent = separate ? `Reset ${selectedSite === 'youtube' ? 'YouTube' : 'Twitch'}` : 'Reset';
     $('twitch-section').hidden = separate && selectedSite !== 'twitch';
-    $('twitchChatOpacity').disabled = !settings.twitchChatGlass;
-    for (const key of ['zenTabsIntensity','zenTabsFade']) $(key).disabled = !settings.zenTabs;
+    for (const key of ['twitchChatOpacity']) for (const suffix of ['', '-number']) $(key+suffix).disabled = !settings.twitchChatGlass;
+    for (const key of ['zenTabsIntensity','zenTabsFade']) for (const suffix of ['', '-number']) $(key+suffix).disabled = !settings.zenTabs;
     $('dimMode').value = settings.dimMode;
     $('projection').value = settings.projection;
     document.body.classList.toggle('disabled',!settings.enabled);
@@ -82,15 +82,31 @@
     const row=document.createElement('div');row.className='control';
     const head=document.createElement('div');head.className='control-head';
     const caption=document.createElement('label');caption.htmlFor=key;caption.textContent=label;
-    const output=document.createElement('output');output.id=key+'-value';output.htmlFor=key;
+    const numberWrap=document.createElement('div');numberWrap.className='number-field';
+    const number=document.createElement('input');number.id=key+'-number';number.type='number';
+    number.setAttribute('aria-label',`${label} — exact value`);
+    number.inputMode=step<1?'decimal':'numeric';
+    const unitText=document.createElement('span');unitText.textContent=unit.trim();unitText.setAttribute('aria-hidden','true');
     const slider=document.createElement('input');slider.id=key;slider.type='range';
-    [slider.min,slider.max]=bounds[key];slider.step=step;
+    for (const input of [slider,number]) {
+      [input.min,input.max]=bounds[key];input.step=step;
+    }
     slider.addEventListener('input',() => {
       current()[key]=Number(slider.value);
-      output.textContent=slider.value+unit;
+      number.value=slider.value;
       saveProfile();
     });
-    head.append(caption,output);row.append(head,slider);$(group+'-controls').append(row);
+    number.addEventListener('change',() => {
+      const raw=number.valueAsNumber;
+      if (!Number.isFinite(raw)) {number.value=current()[key];return;}
+      const [minimum,maximum]=bounds[key];
+      const clamped=Math.min(maximum,Math.max(minimum,raw));
+      const value=step<1?Math.round(clamped*10)/10:Math.round(clamped);
+      current()[key]=value;number.value=value;slider.value=value;
+      saveProfile();
+    });
+    number.addEventListener('keydown',event => {if(event.key==='Enter')number.blur();});
+    numberWrap.append(number,unitText);head.append(caption,numberWrap);row.append(head,slider);$(group+'-controls').append(row);
   }
   for (const key of ['enabled','transparentBlacks','autoBars','sceneCuts','standard','theater','fullscreen','twitchChatGlass','zenTabs']) {
     $(key).addEventListener('change',() => {current()[key]=$(key).checked;reflect();saveProfile();});
@@ -130,7 +146,7 @@
   }));
   $('open-tab').addEventListener('click',async() => {
     try {await api.runtime.openOptionsPage();}
-    catch { $('saved').textContent='Ouvre les options depuis la page des extensions.'; }
+    catch { $('saved').textContent='Open options from the extensions page.'; }
   });
   async function updateStatus() {
     try {
@@ -138,16 +154,16 @@
         const [tab]=await withTimeout(api.tabs.query({active:true,currentWindow:true}),1200);
         tabId=tab?.id;
       }
-      if (tabId == null) throw new Error('Aucun onglet');
+      if (tabId == null) throw new Error('No tab');
       const state=await withTimeout(api.tabs.sendMessage(tabId,{type:'halo-status'}),1200);
       $('status').textContent=state.message;
-      $('zen-tabs-status').textContent=state.zenTabsConnected ? 'Complément Zen connecté' : 'Complément Zen non connecté · à charger dans Sine';
+      $('zen-tabs-status').textContent=state.zenTabsConnected ? 'Halora Tabs connected' : 'Halora Tabs not connected · load it in Sine';
       $('dot').classList.toggle('live',state.active);
       const messages=[state.warning].filter(Boolean);
       $('warning').textContent=messages.join(' ');$('warning').hidden=messages.length===0;
     } catch {
-      $('zen-tabs-status').textContent='Nécessite Halo Tabs dans Sine.';
-      $('status').textContent=current().enabled ? 'Ouvre une vidéo YouTube ou Twitch.' : 'Halo désactivé';
+      $('zen-tabs-status').textContent='Requires Halora Tabs in Sine.';
+      $('status').textContent=current().enabled ? 'Open a YouTube or Twitch video.' : 'Halora disabled';
       $('dot').classList.remove('live');
     }
   }
@@ -170,7 +186,7 @@
         selectedSite=activeSite||'youtube';
         reflect();
       }
-    } catch { if (!edited) $('saved').textContent='Chargement impossible · réglages par défaut affichés'; }
+    } catch { if (!edited) $('saved').textContent='Could not load settings · showing defaults'; }
   }
   void init();
 })();

@@ -1,36 +1,31 @@
-# Halo Tabs pour Zen
+# Halora Tabs for Zen
 
-Mod [Sine](https://github.com/CosmoCreeper/Sine) qui prolonge la lumière de l’extension Halo derrière les onglets de Zen. Le bord de la page et celui de la barre d’onglets utilisent les mêmes couleurs et la même transparence ; la lumière diminue vers le bord extérieur.
+![Halora icon](halo-extension/icon.svg)
 
-## Publier et installer
+Halora extends colors from YouTube and Twitch video edges into the page while preserving Zen Browser's transparency. This [Sine](https://github.com/CosmoCreeper/Sine) mod continues that light behind Zen's tabs, matching the page edge and fading toward the outer edge of the sidebar.
 
-1. Dans Sine, installe ou mets à jour le mod depuis [`Ardi-0/halo-zen-tabs`](https://github.com/Ardi-0/halo-zen-tabs).
-2. Sine doit autoriser les scripts des dépôts personnels pour charger ce mod JavaScript. Active cette possibilité dans Sine si le mod apparaît mais que son script ne s’exécute pas, puis redémarre Zen si Sine le demande.
-3. Charge aussi l’extension Firefox **Halo 0.2.21** fournie dans `halo-extension/`. Pour un chargement temporaire, ouvre `about:debugging#/runtime/this-firefox`, choisis **Charger un module complémentaire temporaire…** et sélectionne `halo-extension/manifest.json`. Un module temporaire doit être rechargé après chaque redémarrage de Zen.
-4. Ouvre une vidéo YouTube ou Twitch. Dans le panneau Halo, la section **Onglets Zen** doit afficher **Complément Zen connecté**.
+The Firefox extension and Sine mod work together: the extension samples the video and renders the page halo; the mod renders the matching light in Zen's interface.
 
-Le mod Sine ajoute la lumière dans l’interface de Zen. L’extension Firefox capture les bords de la vidéo et fournit les couleurs ; les deux sont nécessaires.
+## Install
 
-## Réglages
+1. Install or update this repository, [`Ardi-0/halo-zen-tabs`](https://github.com/Ardi-0/halo-zen-tabs), in Sine. Allow scripts from personal repositories if Sine requests it, then restart Zen if prompted.
+2. Install the Firefox extension from [`halo-extension/`](halo-extension/README.md). For a temporary installation, open `about:debugging#/runtime/this-firefox` in Zen, select **Load Temporary Add-on**, and choose `halo-extension/manifest.json`. Reload it after each Zen restart.
+3. Open a YouTube video or Twitch stream. In Halora's **Zen tabs** section, check for **Halora Tabs connected**, then enable **Light up tabs**.
 
-Dans le panneau Halo, ouvre **Onglets Zen** puis active **Éclairer les onglets**. **Intensité dans les onglets** règle sa force au raccord (100 % par défaut). **Atténuation extérieure** règle la disparition progressive (60 % par défaut). Les autres réglages de couleur, de flou, de noirs transparents et d’assombrissement suivent le halo de la page. Si les **réglages distincts** sont activés, ces valeurs peuvent être différentes sur YouTube et Twitch.
+For a persistent extension installation, a signed Firefox add-on is required. The temporary installation does not change browser security settings.
 
-Seul l’onglet actif éclaire sa barre latérale. Changer d’onglet, quitter une vidéo, désactiver l’effet ou passer en plein écran retire la lumière. Le script ne remplace pas les couleurs ni les contrôles du thème Zen. Un élément opaque ajouté par un autre thème peut toutefois masquer la lumière.
+## Settings
 
-## Données et compatibilité
+Use Halora's popup to adjust reach, blur, color, dimming, rounded player corners, and the Zen tab effect. Every slider has a numeric field for exact values; percentage fields support tenths. **Separate YouTube and Twitch settings** creates independent profiles while preserving the shared profile.
 
-La liaison entre Halo et le mod reste dans le navigateur : elle transmet de petites bandes de couleurs RGBA prélevées sur les bords du halo et le niveau d’assombrissement, pas l’image complète de la vidéo. Elle n’envoie pas ces données à un service distant.
+**Tab light intensity** controls the light where the page meets the sidebar (100% by default). **Fade toward outer edge** controls how quickly it fades across the sidebar (60% by default). Only the active tab lights its sidebar. The effect clears when playback ends, the site changes, the feature is disabled, or fullscreen is entered. The mod keeps Zen's theme colors and controls; an opaque third-party theme element can cover the light.
 
-Depuis Halo 0.2.16, cette bande est transmise à chaque image calculée par le halo de la page. Le complément n’ajoute plus sa propre limite de 16 images par seconde, qui pouvait retarder les couleurs dans les onglets.
+To disable the effect, turn off **Light up tabs** in Halora or disable the mod in Sine. Uninstall the mod in Sine and restart Zen to remove its script.
 
-La version 0.1.2 du mod retire le calque supplémentaire de marges et de coins de la version 0.1.1. Quand le halo est actif, elle désactive uniquement l’ombre du conteneur web de l’onglet actif, responsable du contour sombre autour de la page. L’ombre revient au changement d’onglet ou à la désactivation du halo. Halo 0.2.18 retire les échantillons horizontaux qui n’étaient utilisés que par l’ancien calque. La liaison synchronisée derrière les onglets reste active.
+## Privacy and compatibility
 
-Le mod 0.1.3 et Halo 0.2.19 complètent les petites séparations que Zen réserve autour de la vue web. Quatre bandes légères reprennent les couleurs des bords de la page jusqu’au bord intérieur de Zen, sans modifier la taille de la vidéo, de la page ou des contrôles. Elles ne couvrent que les marges mesurées et disparaissent quand le halo est désactivé.
+The connection stays inside the browser. It passes small RGBA color strips sampled from the halo edges and the dimming level, not complete video frames. It does not send them to a remote service. The extension stores settings locally. Some protected videos prevent pixel sampling; Halora reports this in the popup.
 
-Le mod 0.1.4 retire aussi l’arrondi du conteneur web de Zen lorsque le halo est actif. Halo 0.2.20 rend carré le grand panneau de Twitch sous sa navigation : ces découpes montraient un fond sombre aux coins. Le lecteur vidéo et le panneau du chat gardent leurs propres arrondis. Les styles natifs reviennent dès que le halo est retiré.
+The mod temporarily adjusts the active web container's shadow and corner clipping so dark seams do not interrupt the light at Zen's edges. Those styles are restored when the effect stops. Split views and some compact Zen layouts have not been verified. The current implementation has been exercised in automated browser and interface fixtures, but this release has not been inspected in every live Zen layout.
 
-Le code a été validé dans un banc de test simulant l’interface native, la page et leur liaison. Il n’a pas encore été testé dans le profil Zen de l’utilisateur. Les vues divisées et certains modes compacts restent à confirmer.
-
-Pour désactiver l’effet, décoche l’option dans Halo ou la préférence du mod Sine. Pour retirer le script, désinstalle le mod depuis Sine et redémarre Zen.
-
-Le format `theme.json` et l’installation par URL correspondent au [gestionnaire officiel de Sine](https://github.com/CosmoCreeper/Sine/blob/main/src/core/manager.sys.mjs). Licence : [MIT](LICENSE).
+The mod ID and extension ID remain unchanged from earlier releases so existing installations and saved preferences continue to work. Licensed under [MIT](LICENSE).

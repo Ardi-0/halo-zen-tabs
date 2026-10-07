@@ -1,61 +1,61 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Halo — Réglages</title>
+  <title>Halora — Settings</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <header class="app-header">
-    <div class="brand"><img src="icon.svg" alt="" width="38" height="38"><div><h1>Halo <span>pour Zen</span></h1><p>Lumière autour de la vidéo</p></div></div>
-    <label class="switch" title="Activer Halo pour ce profil"><input id="enabled" type="checkbox" aria-label="Activer Halo pour ce profil"><span></span></label>
+    <div class="brand"><img src="icon.svg" alt="" width="38" height="38"><div><h1>Halora <span>for Zen</span></h1><p>Light beyond the video</p></div></div>
+    <label class="switch" title="Enable Halora for this profile"><input id="enabled" type="checkbox" aria-label="Enable Halora for this profile"><span></span></label>
   </header>
-  <div class="status-line"><span id="dot"></span><p id="status" role="status">Chargement du lecteur…</p><button id="open-tab" type="button" title="Ouvrir les réglages dans un onglet" aria-label="Ouvrir les réglages dans un onglet">↗</button></div>
+  <div class="status-line"><span id="dot"></span><p id="status" role="status">Checking player…</p><button id="open-tab" type="button" title="Open settings in a tab" aria-label="Open settings in a tab">↗</button></div>
   <main id="panel-scroll">
     <p id="warning" class="warning" hidden></p>
     <section class="profile-card" aria-labelledby="profiles-title">
-      <div class="section-heading"><div><h2 id="profiles-title">Profils</h2><p class="hint">Un seul réglage pour les deux sites, ou un par site.</p></div></div>
-      <label class="check profile-toggle"><input id="separateSites" type="checkbox">Réglages distincts pour YouTube et Twitch</label>
-      <div id="site-tabs" class="site-tabs" role="group" aria-label="Profil à modifier" hidden>
+      <div class="section-heading"><div><h2 id="profiles-title">Profiles</h2><p class="hint">One profile for both sites, or one for each.</p></div></div>
+      <label class="check profile-toggle"><input id="separateSites" type="checkbox">Separate YouTube and Twitch settings</label>
+      <div id="site-tabs" class="site-tabs" role="group" aria-label="Profile to edit" hidden>
         <button type="button" data-site="youtube">YouTube</button><button type="button" data-site="twitch">Twitch</button>
       </div>
-      <p id="profile-note" class="profile-note">Les modifications s’appliquent aux deux sites.</p>
+      <p id="profile-note" class="profile-note">Changes apply to both sites.</p>
     </section>
 
-    <div class="presets" aria-label="Ambiances"><button type="button" data-preset="soft">Doux</button><button type="button" data-preset="cinema">Cinéma</button><button type="button" data-preset="wide">Immersif</button></div>
+    <div class="presets" aria-label="Light presets"><button type="button" data-preset="soft">Soft</button><button type="button" data-preset="cinema">Cinema</button><button type="button" data-preset="wide">Immersive</button></div>
 
     <section class="card" aria-labelledby="light-title">
-      <div class="section-heading"><div><h2 id="light-title">Lumière</h2><p class="hint">Étendue, intensité et douceur du halo.</p></div><span class="card-icon" aria-hidden="true">✦</span></div>
+      <div class="section-heading"><div><h2 id="light-title">Light</h2><p class="hint">Reach, strength, and softness.</p></div><span class="card-icon" aria-hidden="true">✦</span></div>
       <div id="light-controls"></div>
     </section>
 
     <section class="card glass" aria-labelledby="background-title">
-      <div class="section-heading"><div><h2 id="background-title">Fond de la page</h2><p class="hint">0 % garde la transparence de Zen.</p></div><span class="card-icon" aria-hidden="true">◐</span></div>
+      <div class="section-heading"><div><h2 id="background-title">Page background</h2><p class="hint">0% preserves Zen's transparency.</p></div><span class="card-icon" aria-hidden="true">◐</span></div>
       <div id="dim-controls"></div>
-      <label class="select-row" for="dimMode">Zone assombrie<select id="dimMode"><option value="uniform">Toute la page</option><option value="local">Autour du lecteur</option></select></label>
-      <button id="transparent" type="button" class="text-button">Retrouver mon fond · 0 %</button>
+      <label class="select-row" for="dimMode">Dim area<select id="dimMode"><option value="uniform">Entire page</option><option value="local">Around the player</option></select></label>
+      <button id="transparent" type="button" class="text-button">Restore transparency · 0%</button>
     </section>
 
-    <section class="card compact" aria-labelledby="player-title"><div class="section-heading"><div><h2 id="player-title">Lecteur</h2><p class="hint">Coins arrondis hors plein écran.</p></div></div><div id="player-controls"></div></section>
+    <section class="card compact" aria-labelledby="player-title"><div class="section-heading"><div><h2 id="player-title">Player</h2><p class="hint">Rounded corners outside fullscreen.</p></div></div><div id="player-controls"></div></section>
 
-    <details id="twitch-section"><summary><span><strong>Chat Twitch</strong><small>Transparence et confort de lecture</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><label class="check"><input id="twitchChatGlass" type="checkbox">Chat translucide et aéré</label><div id="chat-controls"></div><p class="hint">Le chat garde les couleurs du thème Twitch.</p></div></details>
+    <details id="twitch-section"><summary><span><strong>Twitch chat</strong><small>Transparency and readability</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><label class="check"><input id="twitchChatGlass" type="checkbox">Translucent chat</label><div id="chat-controls"></div><p class="hint">Chat keeps the colors of your Twitch theme.</p></div></details>
 
-    <details><summary><span><strong>Onglets Zen</strong><small>Prolonger le halo dans la barre latérale</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><label class="check"><input id="zenTabs" type="checkbox">Éclairer les onglets</label><p id="zen-tabs-status" class="hint" role="status">Nécessite Halo Tabs dans Sine.</p><div id="zen-tabs-controls"></div></div></details>
+    <details><summary><span><strong>Zen tabs</strong><small>Carry light into the sidebar</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><label class="check"><input id="zenTabs" type="checkbox">Light up tabs</label><p id="zen-tabs-status" class="hint" role="status">Requires Halora Tabs in Sine.</p><div id="zen-tabs-controls"></div></div></details>
 
-    <details><summary><span><strong>Affiner la lumière</strong><small>Bords, couleurs et bandes noires</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner">
-      <label class="select-row" for="projection">Projection<select id="projection"><option value="edges">Prolonger les bords</option><option value="scaled">Agrandir l’image</option></select></label>
+    <details><summary><span><strong>Fine-tune the light</strong><small>Edges, colors, and black bars</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner">
+      <label class="select-row" for="projection">Projection<select id="projection"><option value="edges">Extend video edges</option><option value="scaled">Enlarge the image</option></select></label>
       <div id="advanced-controls"></div>
-      <label class="check"><input id="sceneCuts" type="checkbox">Suivre les changements de scène</label>
-      <label class="check"><input id="transparentBlacks" type="checkbox">Rendre les noirs du halo transparents</label>
-      <h3>Étendue par côté</h3><div id="direction-controls"></div>
-      <h3>Flou par côté</h3><p class="hint">100 % utilise le flou général.</p><div id="blur-direction-controls"></div><button id="reset-blur-directions" type="button" class="text-button">Même flou partout · 100 %</button>
-      <h3>Bandes noires de la vidéo</h3><label class="check"><input id="autoBars" type="checkbox">Les ignorer automatiquement</label><div id="crop-controls"></div>
+      <label class="check"><input id="sceneCuts" type="checkbox">Follow scene changes</label>
+      <label class="check"><input id="transparentBlacks" type="checkbox">Make black halo pixels transparent</label>
+      <h3>Reach by side</h3><div id="direction-controls"></div>
+      <h3>Blur by side</h3><p class="hint">100% uses the general blur setting.</p><div id="blur-direction-controls"></div><button id="reset-blur-directions" type="button" class="text-button">Same blur on every side · 100%</button>
+      <h3>Video black bars</h3><label class="check"><input id="autoBars" type="checkbox">Detect and ignore automatically</label><div id="crop-controls"></div>
     </div></details>
 
-    <details><summary><span><strong>Lecture et performances</strong><small>Cadence, qualité et modes</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><div id="performance-controls"></div><h3>Activer dans ces modes</h3><div class="modes"><label class="check"><input id="standard" type="checkbox">Normal</label><label class="check"><input id="theater" type="checkbox">Cinéma</label><label class="check"><input id="fullscreen" type="checkbox">Plein écran</label></div></div></details>
+    <details><summary><span><strong>Playback and performance</strong><small>Frame rate, quality, and modes</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><div id="performance-controls"></div><h3>Enable in these modes</h3><div class="modes"><label class="check"><input id="standard" type="checkbox">Normal</label><label class="check"><input id="theater" type="checkbox">Theater</label><label class="check"><input id="fullscreen" type="checkbox">Fullscreen</label></div></div></details>
 
-    <footer><div class="footer-actions"><p id="saved" aria-live="polite">Réglages enregistrés automatiquement</p><button id="reset" type="button" class="text-button">Réinitialiser</button></div><p class="footnote">Traitement local. Les images de la vidéo ne sont ni stockées ni envoyées.</p><span class="version">Halo 0.2.21</span></footer>
+    <footer><div class="footer-actions"><p id="saved" aria-live="polite">Settings save automatically</p><button id="reset" type="button" class="text-button">Reset</button></div><p class="footnote">Processed locally. Video frames are never stored or sent elsewhere.</p><span class="version">Halora 0.2.22</span></footer>
   </main>
   <script src="settings.js"></script><script src="popup.js"></script>
 </body>

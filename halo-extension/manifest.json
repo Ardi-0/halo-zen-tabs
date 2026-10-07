@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Halo — Ambient transparent pour Zen",
-  "version": "0.2.21",
-  "description": "Prolonge les images YouTube et Twitch dans un halo flouté, avec transparence et assombrissement indépendants.",
+  "name": "Halora — Video Light for Zen",
+  "version": "0.2.22",
+  "description": "Extend YouTube and Twitch video edges into a blurred glow, with adjustable transparency and page dimming.",
   "permissions": ["storage", "https://www.youtube.com/*", "https://www.twitch.tv/*"],
   "browser_specific_settings": {
     "gecko": {
@@ -13,7 +13,7 @@
   },
   "icons": { "48": "icon.svg", "96": "icon.svg" },
   "browser_action": {
-    "default_title": "Halo — Réglages de l’ambient",
+    "default_title": "Halora — Light settings",
     "default_popup": "popup.html",
     "default_icon": "icon.svg"
   },

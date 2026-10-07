@@ -1,7 +1,7 @@
 [
   {
     "property": "uc.halo-zen-tabs.enabled",
-    "label": "Activer la couche de lumière derrière les onglets",
+    "label": "Light up Zen tabs",
     "type": "checkbox",
     "defaultValue": true
   }
