@@ -6,14 +6,14 @@ Mod [Sine](https://github.com/CosmoCreeper/Sine) qui prolonge la lumière de l�
 
 1. Dans Sine, installe ou mets à jour le mod depuis [`Ardi-0/halo-zen-tabs`](https://github.com/Ardi-0/halo-zen-tabs).
 2. Sine doit autoriser les scripts des dépôts personnels pour charger ce mod JavaScript. Active cette possibilité dans Sine si le mod apparaît mais que son script ne s’exécute pas, puis redémarre Zen si Sine le demande.
-3. Charge aussi l’extension Firefox **Halo 0.2.20** fournie dans `halo-extension/`. Pour un chargement temporaire, ouvre `about:debugging#/runtime/this-firefox`, choisis **Charger un module complémentaire temporaire…** et sélectionne `halo-extension/manifest.json`. Un module temporaire doit être rechargé après chaque redémarrage de Zen.
+3. Charge aussi l’extension Firefox **Halo 0.2.21** fournie dans `halo-extension/`. Pour un chargement temporaire, ouvre `about:debugging#/runtime/this-firefox`, choisis **Charger un module complémentaire temporaire…** et sélectionne `halo-extension/manifest.json`. Un module temporaire doit être rechargé après chaque redémarrage de Zen.
 4. Ouvre une vidéo YouTube ou Twitch. Dans le panneau Halo, la section **Onglets Zen** doit afficher **Complément Zen connecté**.
 
 Le mod Sine ajoute la lumière dans l’interface de Zen. L’extension Firefox capture les bords de la vidéo et fournit les couleurs ; les deux sont nécessaires.
 
 ## Réglages
 
-Dans le panneau Halo, **Prolonger le halo derrière les onglets** active l’effet. **Intensité dans les onglets** règle sa force au raccord (100 % par défaut). **Atténuation vers le bord extérieur** règle la disparition progressive (60 % par défaut). Les autres réglages de couleur, de flou, de noirs transparents et d’assombrissement suivent le halo de la page.
+Dans le panneau Halo, ouvre **Onglets Zen** puis active **Éclairer les onglets**. **Intensité dans les onglets** règle sa force au raccord (100 % par défaut). **Atténuation extérieure** règle la disparition progressive (60 % par défaut). Les autres réglages de couleur, de flou, de noirs transparents et d’assombrissement suivent le halo de la page. Si les **réglages distincts** sont activés, ces valeurs peuvent être différentes sur YouTube et Twitch.
 
 Seul l’onglet actif éclaire sa barre latérale. Changer d’onglet, quitter une vidéo, désactiver l’effet ou passer en plein écran retire la lumière. Le script ne remplace pas les couleurs ni les contrôles du thème Zen. Un élément opaque ajouté par un autre thème peut toutefois masquer la lumière.
 

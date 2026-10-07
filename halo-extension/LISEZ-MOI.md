@@ -1,4 +1,4 @@
-# Halo pour Zen — version 0.2.20
+# Halo pour Zen — version 0.2.21
 
 Une extension autonome pour prolonger les **bords des vidéos YouTube et Twitch** autour du lecteur, avec flou et disparition progressive dans la transparence de Zen. Les couleurs gardent leur position le long de chaque bord quand l’étendue change. Le halo suit la vidéo, avec une cadence maximale et un lissage réglables.
 
@@ -20,7 +20,7 @@ La version 0.2.7 aligne automatiquement la **timeline sur l’image en mode cin�
 
 La version 0.2.8 ajoute **les directs et les rediffusions Twitch** sur `www.twitch.tv`. Le halo, les flous par direction, les noirs transparents, l’assombrissement et l’arrondi utilisent les mêmes préférences que YouTube. Le halo accompagne le défilement interne de Twitch dans la zone principale. Les aperçus de l’accueil, les listes, le mini-lecteur, les clips et les lecteurs intégrés restent exclus. Les commandes et la timeline Twitch conservent leur fonctionnement natif.
 
-La version 0.2.9 corrige le **curseur décalé de la timeline YouTube en mode cinéma** : il suit l’extrémité réellement affichée de la barre rouge, même lorsque YouTube conserve une ancienne largeur en mémoire. Sur Twitch, le halo s’étend aussi derrière **le header et la colonne de gauche du site**, avec les mêmes couleurs, flous et réglages d’assombrissement. Le chat est exclu du halo, même si une autre extension rend son fond transparent. Ses styles de fond ne sont plus modifiés par Halo. La timeline Twitch conserve ses dimensions natives. Aucun changement du thème du navigateur n’est nécessaire.
+La version 0.2.9 corrige le **curseur décalé de la timeline YouTube en mode cinéma** : il suit l’extrémité réellement affichée de la barre rouge, même lorsque YouTube conserve une ancienne largeur en mémoire. Sur Twitch, le halo s’étend aussi derrière **le header et la colonne de gauche du site**, avec les mêmes couleurs, flous et réglages d’assombrissement. La timeline Twitch conserve ses dimensions natives. Aucun changement du thème du navigateur n’est nécessaire.
 
 La version **0.2.10** corrige le décalage entre la souris, la prévisualisation et la recherche temporelle sur YouTube. En mode cinéma, le cadre du lecteur est ajusté au format de la vidéo : YouTube recalcule lui-même sa barre, ses chapitres, son curseur et son aperçu dans ces dimensions. Les corrections visuelles séparées de la timeline sont retirées. La place réservée au lecteur dans la page est conservée. En mode normal, en plein écran ou à la désactivation, les dimensions d’origine sont restaurées. Les commandes Twitch restent natives.
 
@@ -44,12 +44,14 @@ La version **0.2.16** transmet au complément chaque image calculée pour le hal
 
 La version **0.2.20** rend carré le grand panneau de Twitch sous la navigation lorsque le halo est actif. Avec **Halo Tabs pour Zen 0.1.4**, le conteneur web du navigateur perd aussi son arrondi pendant l’effet. Ces deux découpes pouvaient laisser voir des quarts de cercle sombres. Le lecteur vidéo et le chat conservent leurs propres coins arrondis ; la désactivation restaure les styles natifs.
 
+La version **0.2.21** réorganise le panneau en réglages courants et sections repliables. La case **Réglages distincts pour YouTube et Twitch** crée deux profils à partir des préférences communes existantes ; chaque site peut ensuite garder son étendue, son flou, son assombrissement et ses autres choix. Décocher la case revient aux préférences communes sans effacer les deux profils, qui sont retrouvés en la recochant. Le panneau garde une taille fixe avec son propre défilement, affiche les commandes sans attendre la réponse des API de l’extension et offre un bouton **↗** pour ouvrir les options dans un onglet.
+
 Le complément est livré séparément avec un installateur local pour Sine existant. Il ajoute une couche lumineuse et conserve les variables de couleur du thème de Zen. Il ne peut pas être installé depuis la boîte des extensions Firefox : son chargement se fait dans Sine. Voir le README du paquet **Halo Tabs** pour l’ajout, la sauvegarde et la désactivation.
 
 ## Installation pour l’essayer
 
 1. Si tu utilises l’archive, extrais-la dans un dossier que tu conserveras.
-2. Dans Zen, désactive **Ambient light for YouTube** pour éviter deux halos superposés. **Garde Zen Internet actif**, avec tes réglages de transparence habituels.
+2. Garde **Zen Internet actif**, avec tes réglages de transparence habituels.
 3. Saisis `about:debugging#/runtime/this-firefox` dans la barre d’adresse de Zen.
 4. Clique sur **Charger un module complémentaire temporaire…**, puis sélectionne le fichier `manifest.json` de ce dossier.
 5. Recharge ton onglet YouTube ou Twitch et lance une vidéo, un direct ou une rediffusion (`twitch.tv/videos/…`).
@@ -95,7 +97,7 @@ Des flous différents par côté nécessitent davantage de calcul. Quand les qua
 1. Recharge la page après le chargement de l’extension et vérifie que Halo est activé.
 2. Lance une vidéo et garde le lecteur visible. Vérifie que son mode est coché dans **Lecture et performances**.
 3. Essaie le préréglage **Immersif** avec une scène lumineuse et colorée.
-4. Lis le message du panneau. Désactive l’autre extension Ambient light si elle est encore active.
+4. Lis le message du panneau pour connaître l’état du lecteur et les éventuelles limites de capture.
 5. Vérifie que la transparence fonctionne toujours avec Zen Internet. Le bouton principal de Halo retire ses propres modifications de style ; il permet de comparer.
 
 ## Données et fonctionnement
@@ -112,4 +114,4 @@ Les images sont échantillonnées par `requestVideoFrameCallback` quand disponib
 
 `settings.js` : valeurs initiales et validation des réglages. `site.js` : détection du lecteur et intégration au défilement de YouTube ou Twitch. `projection.js` : projection des quatre bords et des coins, géométrie et détection des bandes. `blur.js` : flous par côté et raccords, sur la surface de rendu limitée à la zone utile. `twitch-surfaces.js` : repérage des couches structurelles opaques et restitution de leurs styles. `content.js` : capture, lissage et cycle de vie. `content.css` : styles de compatibilité réversibles. `popup.html`, `popup.css`, `popup.js` : panneau de réglages.
 
-Code original, sans reprise du code d’une autre extension. Référence fonctionnelle : [Ambient light for YouTube](https://addons.mozilla.org/en-US/firefox/addon/ambient-light-for-youtube/). Configuration visée : [Zen Internet](https://addons.mozilla.org/en-US/firefox/addon/zen-internet/).
+Configuration visée : [Zen Internet](https://addons.mozilla.org/en-US/firefox/addon/zen-internet/).

@@ -38,5 +38,11 @@
   function blurRadii(settings) {
     return ['blurTop','blurRight','blurBottom','blurLeft'].map(key => settings.blur*settings[key]/100);
   }
-  globalThis.HaloSettings = Object.freeze({ defaults, bounds, normalize, blurRadii });
+  const siteKeys = Object.freeze({ youtube: 'haloYoutube', twitch: 'haloTwitch' });
+  function resolveStorage(storage = {}, site) {
+    const shared = normalize(storage.halo);
+    const key = siteKeys[site];
+    return storage.haloSeparateSites === true && key && storage[key] ? normalize(storage[key]) : shared;
+  }
+  globalThis.HaloSettings = Object.freeze({ defaults, bounds, normalize, blurRadii, siteKeys, resolveStorage });
 })();

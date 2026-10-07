@@ -3,13 +3,14 @@
   const api = globalThis.browser;
   if (!api || globalThis.__haloInstalled) return;
   globalThis.__haloInstalled = true;
-  const { normalize } = globalThis.HaloSettings;
+  const { normalize, resolveStorage } = globalThis.HaloSettings;
   const renderer = globalThis.HaloProjection;
   const site = globalThis.HaloSite;
   const twitchSurfaces = site.id === 'twitch' ? globalThis.HaloTwitchSurfaces.create(queueLayout) : null;
   const zenBridge = globalThis.HaloZenBridge.create(queueLayout);
   const fullCrop = Object.freeze({ x: 0, y: 0, width: 1, height: 1 });
   let settings = normalize();
+  let storedSettings = {};
   let video = null, active = false, frameId = null, frameKind = '', lastDraw = 0;
   let previous = null, readable = true, rendered = 0, warning = '', layoutId = 0;
   let currentSource = '', ready = false, sourceKey = location.pathname + location.search;
@@ -529,7 +530,6 @@
       zenTabsConnected:!!zenBridge.request(),
       projection: settings.projection, sceneCutCount, detectedCrop,
       video: !!video, paused: video?.paused ?? true,
-      conflict: site.id === 'youtube' && !!document.querySelector('[data-ytal-elem], .ambientlight'),
       message: !settings.enabled ? 'Halo désactivé' : active ? `Synchronisé avec les images de ${site.name}` :
         !site.isWatchPage() ? `Ouvre ${site.id === 'twitch' ? 'un direct ou une rediffusion Twitch' : 'une vidéo YouTube'} pour voir le halo` : 'En attente d’un lecteur visible dans un mode autorisé' };
   }
@@ -537,9 +537,12 @@
     if (message?.type === 'halo-status') return Promise.resolve(status());
   });
   api.storage.onChanged.addListener((changes, area) => {
-    if (area !== 'local' || !changes.halo) return;
+    if (area !== 'local' || !['halo','haloSeparateSites','haloYoutube','haloTwitch'].some(key => changes[key])) return;
+    for (const key of ['halo','haloSeparateSites','haloYoutube','haloTwitch']) {
+      if (changes[key]) storedSettings[key] = changes[key].newValue;
+    }
     const old = settings;
-    settings = normalize(changes.halo.newValue);
+    settings = resolveStorage(storedSettings, site.id);
     if (settings.cropX !== old.cropX || settings.cropY !== old.cropY || settings.autoBars !== old.autoBars) resetFrame();
     applyAppearance(); stopFrames(); findVideo(); draw(performance.now(), true); scheduleFrame();
   });
@@ -567,7 +570,8 @@
     document.documentElement.removeAttribute('data-halo-site');
   }, { signal });
   window.addEventListener('pageshow', findVideo, { signal });
-  api.storage.local.get('halo').then(result => {
-    settings = normalize(result.halo); ready = true; applyAppearance(); findVideo();
+  api.storage.local.get(['halo','haloSeparateSites','haloYoutube','haloTwitch']).then(result => {
+    storedSettings = result; settings = resolveStorage(storedSettings, site.id);
+    ready = true; applyAppearance(); findVideo();
   }).catch(() => { ready = true; warning = 'Réglages non accessibles : valeurs par défaut.'; applyAppearance(); findVideo(); });
 })();
