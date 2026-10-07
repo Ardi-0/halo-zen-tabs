@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "Halo — Ambient transparent pour Zen",
+  "version": "0.2.15",
+  "description": "Prolonge les images YouTube et Twitch dans un halo flouté, avec transparence et assombrissement indépendants.",
+  "permissions": ["storage", "https://www.youtube.com/*", "https://www.twitch.tv/*"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "halo-transparent@local.extension",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
+  "icons": { "48": "icon.svg", "96": "icon.svg" },
+  "browser_action": {
+    "default_title": "Halo — Réglages de l’ambient",
+    "default_popup": "popup.html",
+    "default_icon": "icon.svg"
+  },
+  "options_ui": { "page": "popup.html", "open_in_tab": true },
+  "content_scripts": [{
+    "matches": ["https://www.youtube.com/*", "https://www.twitch.tv/*"],
+    "js": ["settings.js", "projection.js", "site.js", "blur.js", "twitch-surfaces.js", "zen-bridge.js", "content.js"],
+    "css": ["content.css"],
+    "run_at": "document_idle"
+  }],
+  "content_security_policy": "script-src 'self'; object-src 'none'"
+}

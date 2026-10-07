@@ -1,0 +1,15 @@
+{
+  "id": "halo-zen-tabs",
+  "name": "Halo Tabs pour Zen",
+  "description": "Prolonge le halo de l’extension Halo derrière les onglets natifs, en conservant le thème de Zen.",
+  "author": "Halo",
+  "version": "0.1.0",
+  "updatedAt": "2026-10-07",
+  "createdAt": "2026-10-07",
+  "fork": ["zen"],
+  "tags": ["ambient", "transparency", "sidebar"],
+  "scripts": {"halo-tabs.uc.js": {"include": ["chrome://browser/content/browser.xhtml"]}},
+  "style": {"chrome": "", "content": ""},
+  "preferences": "preferences.json",
+  "readme": "README.md"
+}

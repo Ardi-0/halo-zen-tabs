@@ -1,0 +1,8 @@
+[
+  {
+    "property": "uc.halo-zen-tabs.enabled",
+    "label": "Activer la couche de lumière derrière les onglets",
+    "type": "checkbox",
+    "defaultValue": true
+  }
+]
