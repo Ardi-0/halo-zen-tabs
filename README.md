@@ -1,6 +1,6 @@
 # Halora Tabs for Zen
 
-![Halora icon](halo-extension/icon.svg)
+<img src="halo-extension/icon.svg" alt="Halora icon" width="88" height="88">
 
 Halora extends colors from YouTube and Twitch video edges into the page while preserving Zen Browser's transparency. This [Sine](https://github.com/CosmoCreeper/Sine) mod continues that light behind Zen's tabs, matching the page edge and fading toward the outer edge of the sidebar.
 

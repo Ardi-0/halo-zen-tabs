@@ -9,6 +9,6 @@ This release was checked with automated browser fixtures for the extension, Twit
 
 The extension uses the same internal ID and storage keys as earlier releases. The Sine mod also retains its ID. Existing settings should therefore survive the visible rename to Halora.
 
-After reloading the temporary extension in `about:debugging`, reload open YouTube and Twitch pages to replace their content scripts. The popup should display **Halora 0.2.23**. Temporary installations must be loaded again after a Zen restart.
+After reloading the temporary extension in `about:debugging`, reload open YouTube and Twitch pages to replace their content scripts. The popup should display **Halora 0.2.24**. Temporary installations must be loaded again after a Zen restart.
 
 Known limits: protected streams may block color sampling; split views and some compact Zen layouts have not been verified; opaque third-party theme layers can hide the tab halo. No real Zen profile or theme is modified by these automated tests.

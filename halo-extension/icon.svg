@@ -12,7 +12,10 @@
   <circle cx="47" cy="49" r="43" fill="url(#wash)"/>
   <ellipse cx="48" cy="48" rx="38" ry="32" transform="rotate(-22 48 48)" fill="none" stroke="url(#light)" stroke-width="12" opacity=".75" filter="url(#glow)"/>
   <ellipse cx="48" cy="48" rx="38" ry="32" transform="rotate(-22 48 48)" fill="none" stroke="url(#light)" stroke-width="2.5" opacity=".82"/>
-  <path d="M30 27v42m36-42v42M30 48h36" fill="none" stroke="#111B28" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M30 27v42m36-42v42M30 48h36" fill="none" stroke="url(#light)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23 34c2-10 12-14 17-9 5 6-1 14-8 12m7-15c-4 13-7 34-11 48-1 4-3 6-6 5m36-47c4-7 13-10 17-4 4 5-1 11-7 9m-2-10c-5 14-8 31-8 44 0 8 5 10 12 5M27 51c10-7 19-9 27-7 8 2 13 0 19-5" stroke="#101A28" stroke-width="9"/>
+    <path d="M23 34c2-10 12-14 17-9 5 6-1 14-8 12m7-15c-4 13-7 34-11 48-1 4-3 6-6 5m36-47c4-7 13-10 17-4 4 5-1 11-7 9m-2-10c-5 14-8 31-8 44 0 8 5 10 12 5M27 51c10-7 19-9 27-7 8 2 13 0 19-5" stroke="url(#light)" stroke-width="4.5"/>
+    <path d="M33 30c2-3 4-5 7-6m-7 30-4 15m38-40c2-3 4-4 6-4m-15 41c0 4 1 6 3 8" stroke="#EDFBFF" stroke-width="1" opacity=".65"/>
+  </g>
   <path d="M74 17v8m-4-4h8" stroke="#E9FBFF" stroke-width="2" stroke-linecap="round" opacity=".95"/>
 </svg>
