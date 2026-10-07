@@ -1,6 +1,6 @@
-# Validation — Halo 0.2.17
+# Validation — Halo 0.2.16
 
-Vérification de la version 0.2.17 : les bandes horizontales et verticales sont transmises à la même cadence que le halo de page. Le banc d’essai simule l’arrondi, la marge supérieure et l’ombre du cadre web Zen, et vérifie que l’éclairage remplit les quatre coins sans déplacer le lecteur ni ses contrôles. Les régressions YouTube, Twitch et du panneau ont été rejouées le 7 octobre 2026. Le rendu dans le profil Zen réel reste à vérifier.
+Vérification de la version 0.2.16 : le complément suit la cadence du halo de page au lieu de limiter ses mises à jour à 16 images par seconde. Les régressions Twitch, timeline YouTube, panneau et liaison avec Zen ont été rejouées le 7 octobre 2026. Ces tests simulent l’interface de Zen ; le rendu dans le profil réel reste à vérifier.
 
 ## Environnement
 
@@ -59,7 +59,7 @@ Les tests vérifient également que :
 
 ## Application dans Zen
 
-Après rechargement de l’extension temporaire, il faut recharger les onglets YouTube et Twitch déjà ouverts pour appliquer le nouveau script. Le panneau affiche `v0.2.17`. Les réglages et les permissions sont conservés. Aucun profil Zen ni thème réel n’a été modifié dans cet environnement. La version 0.2.17 n’a pas été rechargée automatiquement dans le navigateur de l’utilisateur.
+Après rechargement de l’extension temporaire, il faut recharger les onglets YouTube et Twitch déjà ouverts pour appliquer le nouveau script. Le panneau affiche `v0.2.16`. Les réglages et les permissions sont conservés. Aucun profil Zen ni thème réel n’a été modifié dans cet environnement. La version 0.2.16 n’a pas été rechargée automatiquement dans le navigateur de l’utilisateur.
 
 La version reste non signée et doit être rechargée après un redémarrage du navigateur. Le comportement réel dépend aussi des styles de YouTube, de Zen Internet et de la version de Zen.
 

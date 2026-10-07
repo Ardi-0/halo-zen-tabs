@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halo Tabs pour Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.1
+// @version        0.1.2
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -17,19 +17,15 @@
     #halo-zen-tabs-layer { position:absolute!important;pointer-events:none!important;z-index:-1!important;
       display:block!important;margin:0!important;padding:0!important;border:0!important;
       opacity:0;transition:opacity 180ms ease-out; }
-    #halo-zen-gaps-layer { position:fixed!important;left:0!important;top:0!important;
-      pointer-events:none!important;z-index:0!important;display:block!important;
-      margin:0!important;padding:0!important;border:0!important;
-      opacity:0;transition:opacity 180ms ease-out; }
-    .browserSidebarContainer[data-halo-zen-gap-target] { box-shadow:none!important; }
-    @media (prefers-reduced-motion:reduce) {
-      #halo-zen-tabs-layer, #halo-zen-gaps-layer { transition:none; }
+    #tabbrowser-tabpanels .browserSidebarContainer[data-halo-zen-clear-shadow] {
+      box-shadow:none!important;
     }
+    @media (prefers-reduced-motion:reduce) { #halo-zen-tabs-layer { transition:none; } }
   `;
   const services = typeof Services !== 'undefined' ? Services :
     ChromeUtils.importESModule('resource://gre/modules/Services.sys.mjs').Services;
-  let current = null, serial = 0, lastProfile = null, layer = null, gapLayer = null;
-  let pane = null, paneMarker = null, gapTarget = null, gapMarker = null;
+  let current = null, serial = 0, lastProfile = null, layer = null, pane = null, paneMarker = null;
+  let shadowTarget = null, shadowMarker = null;
   let redrawId = 0, fadeTimer = 0, destroyed = false, lastGeometry = '', lastError = '';
   const transports = new Map(), abort = new AbortController();
   const styleNode = document.createElementNS(html,'style');
@@ -37,10 +33,6 @@
   document.documentElement.append(styleNode);
   const lightStrip = document.createElementNS(html,'canvas');
   const darkStrip = document.createElementNS(html,'canvas');
-  const topStrip = document.createElementNS(html,'canvas');
-  const bottomStrip = document.createElementNS(html,'canvas');
-  const topShade = document.createElementNS(html,'canvas');
-  const bottomShade = document.createElementNS(html,'canvas');
   const prefsObserver = {observe:()=>selectBrowser()};
   function eligible(browser) {
     try {
@@ -58,28 +50,41 @@
     }
     return target;
   }
+  function clearShadowTarget() {
+    if (!shadowTarget) return;
+    if (shadowMarker === null) shadowTarget.removeAttribute('data-halo-zen-clear-shadow');
+    else shadowTarget.setAttribute('data-halo-zen-clear-shadow',shadowMarker);
+    shadowTarget = null; shadowMarker = null;
+  }
+  function syncShadowTarget() {
+    const browser = current?.browser;
+    const target = browser?.closest?.('.browserSidebarContainer') ||
+      [...document.querySelectorAll('#tabbrowser-tabpanels .browserSidebarContainer')]
+        .find(container=>container.contains(browser));
+    if (target === shadowTarget) return;
+    clearShadowTarget();
+    if (!target) return;
+    shadowTarget = target;
+    shadowMarker = target.getAttribute('data-halo-zen-clear-shadow');
+    target.setAttribute('data-halo-zen-clear-shadow','');
+  }
   function removeLayer() {
     if (fadeTimer) clearTimeout(fadeTimer);
     fadeTimer = 0;
     resize.disconnect();
     layer?.remove(); layer = null;
-    gapLayer?.remove(); gapLayer = null;
-    if (gapTarget) {
-      if (gapMarker === null) gapTarget.removeAttribute('data-halo-zen-gap-target');
-      else gapTarget.setAttribute('data-halo-zen-gap-target',gapMarker);
-    }
-    gapTarget=null;gapMarker=null;
     if (pane) {
       if (paneMarker === null) pane.removeAttribute('data-halo-zen-layer');
       else pane.setAttribute('data-halo-zen-layer',paneMarker);
     }
     pane = null; paneMarker = null;
+    clearShadowTarget();
   }
   function hide(immediate=false) {
     lastProfile = null;
-    if (!layer && !gapLayer) return;
-    if (layer) layer.style.opacity = '0';
-    if (gapLayer) gapLayer.style.opacity = '0';
+    clearShadowTarget();
+    if (!layer) return;
+    layer.style.opacity = '0';
     if (fadeTimer) clearTimeout(fadeTimer);
     if (immediate) removeLayer();
     else fadeTimer = setTimeout(removeLayer,190);
@@ -107,14 +112,7 @@
   }
   function valid(data) {
     const p = data?.profile, n = p?.dim?.length;
-    const gapKeys = ['top','bottom','topDim','bottomDim'];
-    const anyGap = gapKeys.some(key=>p?.[key] !== undefined) || p?.across !== undefined;
-    const validGap = !anyGap || Number.isInteger(p?.across) && p.across>=2 && p.across<=256 &&
-      gapKeys.every((key,index)=>Array.isArray(p[key]) &&
-        p[key].length === p.across*(index<2?4:1) &&
-        p[key].every(v=>Number.isInteger(v)&&v>=0&&v<=255));
     return p?.v === 1 && Number.isInteger(p.seq) && p.seq >= 0 && ['left','right'].includes(p.side) &&
-      validGap &&
       Number.isInteger(n) && n >= 2 && n <= 256 && Array.isArray(p.rgba) && p.rgba.length === n*4 &&
       [...p.rgba,...p.dim].every(v=>Number.isInteger(v)&&v>=0&&v<=255) &&
       Number.isFinite(p.height) && p.height>=1 && p.height<=32768 &&
@@ -122,79 +120,6 @@
       Number.isFinite(p.step) && p.step>0 && p.step<=32768 &&
       Number.isFinite(p.strength) && p.strength>=0 && p.strength<=100 &&
       Number.isFinite(p.fade) && p.fade>=0 && p.fade<=100;
-  }
-  function gapRadius(browser) {
-    for (let node=browser;node && node!==document.documentElement;node=node.parentElement) {
-      const value=parseFloat(getComputedStyle(node).borderTopLeftRadius);
-      if (Number.isFinite(value) && value>0) return Math.min(64,value);
-    }
-    const variable=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zen-webview-border-radius'));
-    return Number.isFinite(variable) && variable>0 ? Math.min(64,variable) : 0;
-  }
-  function paintGaps(profile,g) {
-    if (!profile.top || !profile.bottom || !profile.topDim || !profile.bottomDim) {
-      gapLayer?.remove();gapLayer=null;
-      if (gapTarget) {
-        if (gapMarker === null) gapTarget.removeAttribute('data-halo-zen-gap-target');
-        else gapTarget.setAttribute('data-halo-zen-gap-target',gapMarker);
-      }
-      gapTarget=null;gapMarker=null;return;
-    }
-    const target=current.browser.closest('.browserSidebarContainer');
-    if (target !== gapTarget) {
-      if (gapTarget) {
-        if (gapMarker === null) gapTarget.removeAttribute('data-halo-zen-gap-target');
-        else gapTarget.setAttribute('data-halo-zen-gap-target',gapMarker);
-      }
-      gapTarget=target;gapMarker=target?.getAttribute('data-halo-zen-gap-target') ?? null;
-      target?.setAttribute('data-halo-zen-gap-target','');
-    }
-    if (!gapLayer) {
-      gapLayer=document.createElementNS(html,'canvas');
-      gapLayer.id='halo-zen-gaps-layer';gapLayer.setAttribute('aria-hidden','true');
-      (document.getElementById('zen-main-app-wrapper') || document.documentElement).prepend(gapLayer);
-    }
-    // The profile has only 128 horizontal samples; a full-DPI window canvas
-    // would waste memory and force needless large texture uploads each frame.
-    const scale=Math.min(devicePixelRatio,1024/Math.max(innerWidth,innerHeight));
-    const w=Math.max(1,Math.round(innerWidth*scale));
-    const h=Math.max(1,Math.round(innerHeight*scale));
-    gapLayer.style.width=`${innerWidth}px`;gapLayer.style.height=`${innerHeight}px`;
-    gapLayer.style.opacity='1';
-    if(gapLayer.width!==w)gapLayer.width=w;
-    if(gapLayer.height!==h)gapLayer.height=h;
-    const ctx=gapLayer.getContext('2d');
-    ctx.setTransform(w/innerWidth,0,0,h/innerHeight,0,0);
-    ctx.clearRect(0,0,innerWidth,innerHeight);
-    function strip(target,values,shade=false) {
-      target.width=profile.across;target.height=1;
-      const context=target.getContext('2d'),image=context.createImageData(profile.across,1);
-      if (shade) for(let i=0;i<profile.across;i++)image.data[i*4+3]=values[i];
-      else image.data.set(values);
-      context.putImageData(image,0,0);
-    }
-    strip(topStrip,profile.top);strip(bottomStrip,profile.bottom);
-    strip(topShade,profile.topDim,true);strip(bottomShade,profile.bottomDim,true);
-    const page=g.page, radius=Math.min(gapRadius(current.browser),page.width/2,page.height/2);
-    function band(y,height,colour,shade) {
-      if (height<=0) return;
-      ctx.drawImage(shade,page.left,y,page.width,height);
-      ctx.globalAlpha=profile.strength/100;
-      ctx.drawImage(colour,page.left,y,page.width,height);
-      ctx.globalAlpha=1;
-    }
-    band(0,Math.max(0,page.top),topStrip,topShade);
-    band(page.bottom,Math.max(0,innerHeight-page.bottom),bottomStrip,bottomShade);
-    if (!radius) return;
-    function corner(x,y,cx,cy,colour,shade) {
-      ctx.save();ctx.beginPath();ctx.rect(x,y,radius,radius);
-      ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.clip('evenodd');
-      band(y,radius,colour,shade);ctx.restore();
-    }
-    corner(page.left,page.top,page.left+radius,page.top+radius,topStrip,topShade);
-    corner(page.right-radius,page.top,page.right-radius,page.top+radius,topStrip,topShade);
-    corner(page.left,page.bottom-radius,page.left+radius,page.bottom-radius,bottomStrip,bottomShade);
-    corner(page.right-radius,page.bottom-radius,page.right-radius,page.bottom-radius,bottomStrip,bottomShade);
   }
   function paint() {
     const packet = lastProfile, g = geometry();
@@ -207,6 +132,7 @@
       layer.setAttribute('aria-hidden','true');pane.prepend(layer);
       resize.observe(pane);resize.observe(current.browser);
     }
+    syncShadowTarget();
     const parent = layer.offsetParent?.getBoundingClientRect() || {left:0,top:0};
     Object.assign(layer.style,{left:`${g.box.left-parent.left}px`,top:`${g.box.top-parent.top}px`,
       width:`${g.box.width}px`,height:`${g.box.height}px`,opacity:'1'});
@@ -229,7 +155,6 @@
     fade.addColorStop(1,`rgba(0,0,0,${g.side==='left'?near:far})`);
     ctx.fillStyle=fade;ctx.fillRect(0,0,w,h);
     ctx.globalCompositeOperation='source-over';
-    paintGaps(p,g);
   }
   // Original frame bridge. It reads only Halo's bounded numerical profile.
   // Page-provided strings are never executed or injected as CSS/URLs.
@@ -322,7 +247,8 @@
     delete window.HaloZenTabs;
   }
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
-    status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',error:lastError,version:'0.1.1'})});
+    status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
+      error:lastError,version:'0.1.2'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
