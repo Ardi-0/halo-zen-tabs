@@ -8,8 +8,7 @@
     const root = document.documentElement;
     const filtered = document.createElement('canvas');
     const context = filtered.getContext('2d',{willReadFrequently:true});
-    let revision = 0, cachedRevision = -1, cachedFilter = '', lastPublish = -Infinity, sequence = 0;
-    let timer = 0, pending = null;
+    let revision = 0, cachedRevision = -1, cachedFilter = '', sequence = 0;
     const observer = new MutationObserver(onChange);
     observer.observe(root,{attributes:true,attributeFilter:[requestAttribute]});
     function request() {
@@ -22,28 +21,20 @@
       } catch { return null; }
     }
     function clear() {
-      if(timer)clearTimeout(timer);timer=0;pending=null;lastPublish=-Infinity;
       root.removeAttribute(profileAttribute);
     }
     function mask(position,size,start,end,f) {
       if (position < 0 || position > size) return 0;
       return Math.min(1,start*f ? position/(start*f) : 1,end*f ? (size-position)/(end*f) : 1);
     }
-    function publish(details,force=false) {
+    function publish(details) {
       const {canvas,projection,geometry,settings,blurRadii,directionalBlur,picture,frameReady}=details;
       const consumer = request();
       if (!consumer || !settings.zenTabs || !frameReady || document.hidden || document.fullscreenElement || !geometry) {
         clear(); return;
       }
-      const now = performance.now();
-      const interval=1000/Math.min(16,settings.fps);
-      if (!force && now-lastPublish < interval) {
-        pending=details;
-        if(!timer)timer=setTimeout(()=>{timer=0;const next=pending;pending=null;if(next)publish(next,true);},interval-(now-lastPublish));
-        return;
-      }
-      if(timer)clearTimeout(timer);timer=0;pending=null;
-      lastPublish = now;
+      // The page renderer already applies settings.fps. Publish that same
+      // projected frame immediately so the native tabs never trail the page.
       const box = projection.getBoundingClientRect();
       if (!box.width || !box.height) { clear(); return; }
       const scale = canvas.width/box.width;

@@ -1,4 +1,4 @@
-# Halo pour Zen — version 0.2.15
+# Halo pour Zen — version 0.2.16
 
 Une extension autonome pour prolonger les **bords des vidéos YouTube et Twitch** autour du lecteur, avec flou et disparition progressive dans la transparence de Zen. Les couleurs gardent leur position le long de chaque bord quand l’étendue change. Le halo suit la vidéo, avec une cadence maximale et un lissage réglables.
 
@@ -39,6 +39,8 @@ La version **0.2.14** prend en charge le placement réel du lecteur Twitch en **
 Les dégradés noirs des commandes Twitch sont désormais dessinés seulement sur le contour arrondi de l’image affichée. Ils ne couvrent plus les coins découpés ni les marges autour d’une image centrée dans le lecteur théâtre. Les boutons et les menus conservent leur position et leur fonctionnement ; leurs arrière-plans propres restent natifs. Les dégradés d’origine et leurs priorités sont restaurés en quittant l’effet ou en plein écran.
 
 La version **0.2.15** ajoute la liaison optionnelle au complément **Halo Tabs pour Zen 0.1.0**, à charger avec Sine. Une fine bande de couleurs du halo prolonge la lumière derrière les onglets aux mêmes hauteurs, avec l’alpha et l’assombrissement du raccord. La section **Onglets Zen** règle son activation, son intensité et son atténuation vers le bord extérieur. À 100 % d’intensité, la bande conserve la lumière du bord de page. Les préréglages préservent ces choix. Sans complément connecté, cette liaison ne calcule ni ne transmet de bande supplémentaire. Les permissions de l’extension restent identiques.
+
+La version **0.2.16** transmet au complément chaque image calculée pour le halo de la page. L’ancienne limite supplémentaire de 16 images par seconde pouvait décaler les couleurs derrière les onglets lors des mouvements rapides. La fréquence reste celle choisie dans le réglage principal de Halo.
 
 Le complément est livré séparément avec un installateur local pour Sine existant. Il ajoute une couche lumineuse et conserve les variables de couleur du thème de Zen. Il ne peut pas être installé depuis la boîte des extensions Firefox : son chargement se fait dans Sine. Voir le README du paquet **Halo Tabs** pour l’ajout, la sauvegarde et la désactivation.
 

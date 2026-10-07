@@ -1,6 +1,6 @@
-# Validation — Halo 0.2.15
+# Validation — Halo 0.2.16
 
-Vérification de la version 0.2.15 : Twitch, timeline YouTube, 22 régressions générales, panneau et nouveau complément Zen le 7 octobre 2026. L’arrondi YouTube a été testé sur la version 0.2.10 ; les 42 comparaisons détaillées de scroll, le header YouTube et les contrôles de flou directionnel sur la version 0.2.9, le même jour.
+Vérification de la version 0.2.16 : le complément suit la cadence du halo de page au lieu de limiter ses mises à jour à 16 images par seconde. Les régressions Twitch, timeline YouTube, panneau et liaison avec Zen ont été rejouées le 7 octobre 2026. Ces tests simulent l’interface de Zen ; le rendu dans le profil réel reste à vérifier.
 
 ## Environnement
 
@@ -59,7 +59,7 @@ Les tests vérifient également que :
 
 ## Application dans Zen
 
-Après rechargement de l’extension temporaire, il faut recharger les onglets YouTube et Twitch déjà ouverts pour appliquer le nouveau script. Le panneau affiche `v0.2.15`. Les réglages et les permissions sont conservés. Le complément Sine reste à installer : aucun profil Zen ni thème réel n’a été modifié dans cet environnement. La version 0.2.15 n’a pas été rechargée automatiquement dans le navigateur de l’utilisateur.
+Après rechargement de l’extension temporaire, il faut recharger les onglets YouTube et Twitch déjà ouverts pour appliquer le nouveau script. Le panneau affiche `v0.2.16`. Les réglages et les permissions sont conservés. Aucun profil Zen ni thème réel n’a été modifié dans cet environnement. La version 0.2.16 n’a pas été rechargée automatiquement dans le navigateur de l’utilisateur.
 
 La version reste non signée et doit être rechargée après un redémarrage du navigateur. Le comportement réel dépend aussi des styles de YouTube, de Zen Internet et de la version de Zen.
 
