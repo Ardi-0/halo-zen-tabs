@@ -18,7 +18,7 @@ This build is unsigned. Temporary add-ons must be loaded again after a Zen resta
 - **Page background:** 0% dimming keeps your existing transparency. Higher values add a translucent dark layer, either across the page or around the player. The video and text remain readable.
 - **Player:** Set rounded corners for the displayed video. The effect is removed in fullscreen. YouTube's theater layout adapts the player to the displayed video so its native timeline, preview, and seeking stay aligned.
 - **Twitch chat:** Optionally make the chat panel translucent, with adjustable background opacity.
-- **Zen tabs:** With [Halora Tabs for Zen](../README.md) installed through Sine, continue the halo behind the active tab's sidebar. Set tab intensity and outer fade independently.
+- **Zen tabs:** With [Halora Tabs for Zen](../README.md) installed through Sine, continue the halo behind the active tab's sidebar. Set tab intensity and outer fade independently; the join with the page remains at the page halo's strength.
 - **Fine-tuning:** Adjust color, smoothing, scene-change response, transparent black pixels, and automatic or manual treatment of black bars. When transparent blacks are enabled, **Black pixel opacity** sets how much of the darkest video pixels remains visible: 0% keeps the earlier fully transparent behavior; 100% makes them opaque.
 - **Performance:** Choose capture rate, quality, and where the effect runs.
 

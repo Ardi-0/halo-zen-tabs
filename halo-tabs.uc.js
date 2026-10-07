@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.5
+// @version        0.1.6
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -162,8 +162,11 @@
     const separation=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zen-element-separation'));
     const topHeight=Math.max(0,Math.min(24,Number.isFinite(separation)?separation:0,box.height));
     const leftGap=page.left-contentLeft,rightGap=contentRight-page.right,bottomGap=box.bottom-page.bottom;
-    const leftWidth=leftGap>0&&leftGap<=64?leftGap:0;
-    const rightWidth=rightGap>0&&rightGap<=64?rightGap:0;
+    // Zen can reserve more than 64 CSS pixels between the tabs and the web
+    // view, especially with custom sidebar layouts. Fill that measured gap.
+    const maxSideGap=Math.min(160,Math.max(64,innerWidth*.12));
+    const leftWidth=leftGap>0&&leftGap<=maxSideGap?leftGap:0;
+    const rightWidth=rightGap>0&&rightGap<=maxSideGap?rightGap:0;
     const bottomHeight=bottomGap>0&&bottomGap<=64?bottomGap:0;
     const main=p.side==='left'?{left:p.rgba,leftDim:p.dim,right:p.opposite,rightDim:p.oppositeDim}:
       {left:p.opposite,leftDim:p.oppositeDim,right:p.rgba,rightDim:p.dim};
@@ -189,21 +192,22 @@
       if(target.width!==w)target.width=w;
       if(target.height!==h)target.height=h;
       const ctx=target.getContext('2d');ctx.clearRect(0,0,w,h);
+      if (!p.strength) continue;
       const colour=sampleCanvas(`${band.name}-colour`,band.rgba,band.n,band.vertical);
       const shade=sampleCanvas(`${band.name}-shade`,band.dim,band.n,band.vertical,true);
       if (band.vertical) {
         const sy=h/band.h,zoom=page.height/p.height;
         const y=(page.top-band.y+(p.y0-p.step/2)*zoom)*sy,stripHeight=band.n*p.step*zoom*sy;
         ctx.drawImage(shade,0,y,w,stripHeight);
-        ctx.globalAlpha=p.strength/100;ctx.drawImage(colour,0,y,w,stripHeight);
+        ctx.drawImage(colour,0,y,w,stripHeight);
       } else {
         const sx=w/band.w,x=(page.left-band.x)*sx,stripWidth=page.width*sx;
         const start=Math.max(0,x),end=Math.min(w,x+stripWidth);
-        if (start>0) {ctx.drawImage(shade,0,0,1,1,0,0,start,h);ctx.globalAlpha=p.strength/100;
-          ctx.drawImage(colour,0,0,1,1,0,0,start,h);ctx.globalAlpha=1;}
-        if (end>start) {ctx.drawImage(shade,x,0,stripWidth,h);ctx.globalAlpha=p.strength/100;
-          ctx.drawImage(colour,x,0,stripWidth,h);ctx.globalAlpha=1;}
-        if (end<w) {ctx.drawImage(shade,band.n-1,0,1,1,end,0,w-end,h);ctx.globalAlpha=p.strength/100;
+        if (start>0) {ctx.drawImage(shade,0,0,1,1,0,0,start,h);
+          ctx.drawImage(colour,0,0,1,1,0,0,start,h);}
+        if (end>start) {ctx.drawImage(shade,x,0,stripWidth,h);
+          ctx.drawImage(colour,x,0,stripWidth,h);}
+        if (end<w) {ctx.drawImage(shade,band.n-1,0,1,1,end,0,w-end,h);
           ctx.drawImage(colour,band.n-1,0,1,1,end,0,w-end,h);}
       }
       ctx.globalAlpha=1;
@@ -238,9 +242,15 @@
     const y=(g.page.top-g.box.top+(p.y0-p.step/2)*zoom)*sy, height=n*p.step*zoom*sy;
     ctx.drawImage(darkStrip,0,y,w,height);ctx.drawImage(lightStrip,0,y,w,height);
     ctx.globalCompositeOperation='destination-in';
-    const fade=ctx.createLinearGradient(0,0,w,0),near=p.strength/100,far=near*(1-p.fade/100);
-    fade.addColorStop(0,`rgba(0,0,0,${g.side==='left'?far:near})`);
-    fade.addColorStop(1,`rgba(0,0,0,${g.side==='left'?near:far})`);
+    // Keep the page-side edge exact. The intensity setting still shapes most
+    // of the sidebar; a smooth correction reaches full strength at the join.
+    const fade=ctx.createLinearGradient(0,0,w,0),strength=p.strength/100,falloff=p.fade/100;
+    for (const t of [0,.25,.5,.75,.9,1]) {
+      const towardPage=g.side==='left'?t:1-t;
+      const opacity=strength*(1-falloff*(1-towardPage))+
+        (strength>0?1-strength:0)*towardPage**4;
+      fade.addColorStop(t,`rgba(0,0,0,${opacity})`);
+    }
     ctx.fillStyle=fade;ctx.fillRect(0,0,w,h);
     ctx.globalCompositeOperation='source-over';
     paintEdges(p,g);
@@ -306,7 +316,7 @@
     const browser=gBrowser.selectedBrowser;
     if(!enabled()||!eligible(browser))return;
     const manager=browser.messageManager||browser.frameLoader?.messageManager;
-    if(!manager?.loadFrameScript||!manager?.addMessageListener){lastError='Pont de contenu indisponible dans cette version de Zen';return;}
+    if(!manager?.loadFrameScript||!manager?.addMessageListener){lastError='Content bridge unavailable in this Zen version';return;}
     const old=transports.get(browser);
     if(old&&old.manager!==manager){try{old.manager.removeMessageListener(messageName,old.listener);}catch{}transports.delete(browser);}
     if(!transports.has(browser)) {

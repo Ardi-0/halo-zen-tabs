@@ -18,7 +18,7 @@ For a persistent extension installation, a signed Firefox add-on is required. Th
 
 Use Halora's popup to adjust reach, blur, color, dimming, rounded player corners, and the Zen tab effect. Every slider has a numeric field for exact values; percentage fields support tenths. **Separate YouTube and Twitch settings** creates independent profiles while preserving the shared profile. **Settings backup** exports or imports all profiles in a versioned JSON file.
 
-**Tab light intensity** controls the light where the page meets the sidebar (100% by default). **Fade toward outer edge** controls how quickly it fades across the sidebar (60% by default). Only the active tab lights its sidebar. The effect clears when playback ends, the site changes, the feature is disabled, or fullscreen is entered. The mod keeps Zen's theme colors and controls; an opaque third-party theme element can cover the light.
+**Tab light intensity** controls the light deeper in the sidebar (100% by default). The edge touching the page keeps the page halo's full strength to avoid a visible seam. **Fade toward outer edge** controls how quickly the light falls away (60% by default). The mod also fills the measured space between the sidebar and the web view, up to 160 CSS pixels. Only the active tab lights its sidebar. The effect clears when playback ends, the site changes, the feature is disabled, or fullscreen is entered. The mod keeps Zen's theme colors and controls; an opaque third-party theme element can cover the light.
 
 To disable the effect, turn off **Light up tabs** in Halora or disable the mod in Sine. Uninstall the mod in Sine and restart Zen to remove its script.
 
