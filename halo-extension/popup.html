@@ -48,6 +48,7 @@
       <div id="advanced-controls"></div>
       <label class="check"><input id="sceneCuts" type="checkbox">Follow scene changes</label>
       <label class="check"><input id="transparentBlacks" type="checkbox">Make black halo pixels transparent</label>
+      <div id="black-opacity-controls" hidden></div>
       <h3>Reach by side</h3><div id="direction-controls"></div>
       <h3>Blur by side</h3><p class="hint">100% uses the general blur setting.</p><div id="blur-direction-controls"></div><button id="reset-blur-directions" type="button" class="text-button">Same blur on every side · 100%</button>
       <h3>Video black bars</h3><label class="check"><input id="autoBars" type="checkbox">Detect and ignore automatically</label><div id="crop-controls"></div>
@@ -55,7 +56,9 @@
 
     <details><summary><span><strong>Playback and performance</strong><small>Frame rate, quality, and modes</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><div id="performance-controls"></div><h3>Enable in these modes</h3><div class="modes"><label class="check"><input id="standard" type="checkbox">Normal</label><label class="check"><input id="theater" type="checkbox">Theater</label><label class="check"><input id="fullscreen" type="checkbox">Fullscreen</label></div></div></details>
 
-    <footer><div class="footer-actions"><p id="saved" aria-live="polite">Settings save automatically</p><button id="reset" type="button" class="text-button">Reset</button></div><p class="footnote">Processed locally. Video frames are never stored or sent elsewhere.</p><span class="version">Halora 0.2.22</span></footer>
+    <details><summary><span><strong>Settings backup</strong><small>Export or import all profiles</small></span><b aria-hidden="true">⌄</b></summary><div class="details-inner"><p class="hint">Save your shared, YouTube, and Twitch settings in one JSON file. Import replaces the current settings.</p><div class="backup-actions"><button id="export-settings" type="button">Export JSON</button><button id="import-settings" type="button">Import JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden></div><p id="backup-status" class="hint" role="status" aria-live="polite"></p></div></details>
+
+    <footer><div class="footer-actions"><p id="saved" aria-live="polite">Settings save automatically</p><button id="reset" type="button" class="text-button">Reset</button></div><p class="footnote">Processed locally. Video frames are never stored or sent elsewhere.</p><span class="version">Halora 0.2.23</span></footer>
   </main>
   <script src="settings.js"></script><script src="popup.js"></script>
 </body>

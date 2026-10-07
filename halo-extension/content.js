@@ -462,12 +462,14 @@
           const blend = force || sceneCut || !previous || !settings.smoothing ? 1 : 1 - Math.exp(-elapsed / settings.smoothing);
           if (!previous || previous.length !== p.length) previous = new Float32Array(p.length);
           for (let i = 0; i < p.length; i += 4) {
-            // Smooth actual video pixels, then derive alpha: black never becomes an opaque backdrop.
+            // Smooth video colors, then apply the user's opacity floor to dark pixels.
             for (let c = 0; c < 3; c++) {
               previous[i+c] += (p[i+c] - previous[i+c]) * blend;
               p[i+c] = previous[i+c];
             }
-            p[i+3] = settings.transparentBlacks ? Math.max(p[i], p[i+1], p[i+2]) : 255;
+            const peak = Math.max(p[i], p[i+1], p[i+2]);
+            p[i+3] = settings.transparentBlacks ?
+              settings.blackOpacity * 2.55 + peak * (1 - settings.blackOpacity / 100) : 255;
           }
           frameCtx.putImageData(pixels, 0, 0);
         }

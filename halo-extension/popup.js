@@ -7,6 +7,7 @@
   let shared = normalize(), profiles = { youtube:normalize(), twitch:normalize() };
   let profileStored = { youtube:false, twitch:false }, separate = false, selectedSite = 'youtube';
   let activeSite = null, tabId = null, edited = false, pendingWrite = null, writing = false;
+  let activeWrite = null, initialLoad = null;
 
   const controls = [
     ['light','spread','Reach',' px',1], ['light','intensity','Intensity',' %',.1],
@@ -17,6 +18,7 @@
     ['zen-tabs','zenTabsFade','Fade toward outer edge',' %',.1],
     ['advanced','saturation','Saturation',' %',.1], ['advanced','brightness','Brightness',' %',.1],
     ['advanced','feather','Edge feathering',' %',.1], ['advanced','smoothing','Smoothing',' ms',1],
+    ['black-opacity','blackOpacity','Black pixel opacity',' %',.1],
     ['direction','top','Top',' %',.1], ['direction','right','Right',' %',.1],
     ['direction','bottom','Bottom',' %',.1], ['direction','left','Left',' %',.1],
     ['blur-direction','blurTop','Top blur',' %',.1], ['blur-direction','blurRight','Right blur',' %',.1],
@@ -35,7 +37,7 @@
     edited = true;
     pendingWrite = { ...pendingWrite, ...payload };
     $('saved').textContent = 'Saving…';
-    if (!writing) void flushWrites();
+    if (!activeWrite) activeWrite=flushWrites().finally(() => {activeWrite=null;});
   }
   async function flushWrites() {
     writing = true;
@@ -72,6 +74,7 @@
       'Changes apply to both sites.';
     $('reset').textContent = separate ? `Reset ${selectedSite === 'youtube' ? 'YouTube' : 'Twitch'}` : 'Reset';
     $('twitch-section').hidden = separate && selectedSite !== 'twitch';
+    $('black-opacity-controls').hidden = !settings.transparentBlacks;
     for (const key of ['twitchChatOpacity']) for (const suffix of ['', '-number']) $(key+suffix).disabled = !settings.twitchChatGlass;
     for (const key of ['zenTabsIntensity','zenTabsFade']) for (const suffix of ['', '-number']) $(key+suffix).disabled = !settings.zenTabs;
     $('dimMode').value = settings.dimMode;
@@ -148,6 +151,69 @@
     try {await api.runtime.openOptionsPage();}
     catch { $('saved').textContent='Open options from the extensions page.'; }
   });
+  const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  function validateProfile(value) {
+    if (!isRecord(value)) throw new Error('A settings profile is missing or invalid.');
+    for (const [key, item] of Object.entries(value)) {
+      if (!(key in defaults)) continue;
+      if (bounds[key]) {
+        if (typeof item !== 'number' || !Number.isFinite(item)) throw new Error(`Invalid value for ${key}.`);
+      } else if (typeof defaults[key] === 'boolean') {
+        if (typeof item !== 'boolean') throw new Error(`Invalid value for ${key}.`);
+      } else if ((key === 'dimMode' && !['uniform','local'].includes(item)) ||
+        (key === 'projection' && !['edges','scaled'].includes(item))) throw new Error(`Invalid value for ${key}.`);
+    }
+    return normalize(value);
+  }
+  function parseBackup(data) {
+    if (!isRecord(data) || data.format !== 'halora-settings' || data.schemaVersion !== 1 || !isRecord(data.profiles))
+      throw new Error('This is not a supported Halora settings file.');
+    const profilesData=data.profiles;
+    if (typeof profilesData.separateSites !== 'boolean') throw new Error('The profile mode is missing.');
+    const sharedProfile=validateProfile(profilesData.shared);
+    const youtube=profilesData.youtube == null ? null : validateProfile(profilesData.youtube);
+    const twitch=profilesData.twitch == null ? null : validateProfile(profilesData.twitch);
+    if (profilesData.separateSites && (!youtube || !twitch)) throw new Error('Both site profiles are required.');
+    return {shared:sharedProfile,separate:profilesData.separateSites,youtube,twitch};
+  }
+  function backupStatus(message,error=false) {
+    $('backup-status').textContent=message;
+    $('backup-status').classList.toggle('error',error);
+  }
+  $('export-settings').addEventListener('click',async() => {
+    try {
+      await initialLoad;
+      const data={format:'halora-settings',schemaVersion:1,exportedAt:new Date().toISOString(),profiles:{
+        separateSites:separate,shared:normalize(shared),
+        youtube:profileStored.youtube ? normalize(profiles.youtube) : null,
+        twitch:profileStored.twitch ? normalize(profiles.twitch) : null
+      }};
+      const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)+'\n'],{type:'application/json'}));
+      const link=document.createElement('a');link.href=url;link.download=`halora-settings-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.append(link);link.click();link.remove();setTimeout(() => URL.revokeObjectURL(url),30000);
+      backupStatus('Settings exported.');
+    } catch {backupStatus('Could not export settings.',true);}
+  });
+  $('import-settings').addEventListener('click',() => $('import-file').click());
+  $('import-file').addEventListener('change',async event => {
+    const file=event.target.files?.[0];event.target.value='';
+    if (!file) return;
+    $('import-settings').disabled=true;
+    try {
+      if (file.size>262144) throw new Error('The settings file is too large.');
+      const imported=parseBackup(JSON.parse(await file.text()));
+      await initialLoad;
+      if (activeWrite) await activeWrite;
+      await api.storage.local.set({halo:imported.shared,haloSeparateSites:imported.separate,
+        haloYoutube:imported.youtube,haloTwitch:imported.twitch});
+      edited=true;shared=imported.shared;separate=imported.separate;
+      profiles={youtube:imported.youtube||normalize(shared),twitch:imported.twitch||normalize(shared)};
+      profileStored={youtube:!!imported.youtube,twitch:!!imported.twitch};
+      selectedSite=activeSite||selectedSite;reflect();
+      $('saved').textContent='Settings saved';backupStatus('Settings imported.');
+    } catch (error) {backupStatus(error instanceof SyntaxError ? 'Invalid JSON file.' : error.message||'Could not import settings.',true);}
+    finally {$('import-settings').disabled=false;}
+  });
   async function updateStatus() {
     try {
       if (tabId == null) {
@@ -188,5 +254,5 @@
       }
     } catch { if (!edited) $('saved').textContent='Could not load settings · showing defaults'; }
   }
-  void init();
+  initialLoad=init();
 })();

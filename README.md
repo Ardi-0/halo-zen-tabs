@@ -16,7 +16,7 @@ For a persistent extension installation, a signed Firefox add-on is required. Th
 
 ## Settings
 
-Use Halora's popup to adjust reach, blur, color, dimming, rounded player corners, and the Zen tab effect. Every slider has a numeric field for exact values; percentage fields support tenths. **Separate YouTube and Twitch settings** creates independent profiles while preserving the shared profile.
+Use Halora's popup to adjust reach, blur, color, dimming, rounded player corners, and the Zen tab effect. Every slider has a numeric field for exact values; percentage fields support tenths. **Separate YouTube and Twitch settings** creates independent profiles while preserving the shared profile. **Settings backup** exports or imports all profiles in a versioned JSON file.
 
 **Tab light intensity** controls the light where the page meets the sidebar (100% by default). **Fade toward outer edge** controls how quickly it fades across the sidebar (60% by default). Only the active tab lights its sidebar. The effect clears when playback ends, the site changes, the feature is disabled, or fullscreen is entered. The mod keeps Zen's theme colors and controls; an opaque third-party theme element can cover the light.
 
@@ -24,7 +24,7 @@ To disable the effect, turn off **Light up tabs** in Halora or disable the mod i
 
 ## Privacy and compatibility
 
-The connection stays inside the browser. It passes small RGBA color strips sampled from the halo edges and the dimming level, not complete video frames. It does not send them to a remote service. The extension stores settings locally. Some protected videos prevent pixel sampling; Halora reports this in the popup.
+The connection stays inside the browser. It passes small RGBA color strips sampled from the halo edges and the dimming level, not complete video frames. It does not send them to a remote service. The extension stores settings in `browser.storage.local`, validates them when loading, and applies defaults for missing values. Import replaces the current profiles only after the JSON file passes format and value checks. Some protected videos prevent pixel sampling; Halora reports this in the popup.
 
 The mod temporarily adjusts the active web container's shadow and corner clipping so dark seams do not interrupt the light at Zen's edges. Those styles are restored when the effect stops. Split views and some compact Zen layouts have not been verified. The current implementation has been exercised in automated browser and interface fixtures, but this release has not been inspected in every live Zen layout.
 

@@ -9,7 +9,7 @@
     playerRadius: 24,
     twitchChatGlass: true, twitchChatOpacity: 45,
     zenTabs: true, zenTabsIntensity: 100, zenTabsFade: 60,
-    transparentBlacks: true, cropX: 0, cropY: 0,
+    transparentBlacks: true, blackOpacity: 0, cropX: 0, cropY: 0,
     projection: 'edges', autoBars: true, sceneCuts: true,
     standard: true, theater: true, fullscreen: true
   });
@@ -21,7 +21,8 @@
     playerRadius: [0, 64],
     twitchChatOpacity: [0, 100],
     zenTabsIntensity: [0, 100], zenTabsFade: [0, 100],
-    fps: [10, 60], resolution: [128, 512], cropX: [0, 20], cropY: [0, 20]
+    fps: [10, 60], resolution: [128, 512], cropX: [0, 20], cropY: [0, 20],
+    blackOpacity: [0, 100]
   });
   function normalize(value = {}) {
     const result = { ...defaults };
