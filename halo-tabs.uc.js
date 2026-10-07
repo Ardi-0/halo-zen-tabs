@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halo Tabs pour Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.2
+// @version        0.1.3
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -20,12 +20,20 @@
     #tabbrowser-tabpanels .browserSidebarContainer[data-halo-zen-clear-shadow] {
       box-shadow:none!important;
     }
-    @media (prefers-reduced-motion:reduce) { #halo-zen-tabs-layer { transition:none; } }
+    #halo-zen-edge-top, #halo-zen-edge-bottom, #halo-zen-edge-left, #halo-zen-edge-right {
+      position:fixed!important;display:block!important;pointer-events:none!important;
+      z-index:2147483000!important;margin:0!important;padding:0!important;border:0!important;
+      opacity:1;transition:opacity 180ms ease-out;
+    }
+    @media (prefers-reduced-motion:reduce) {
+      #halo-zen-tabs-layer, [id^="halo-zen-edge-"] { transition:none; }
+    }
   `;
   const services = typeof Services !== 'undefined' ? Services :
     ChromeUtils.importESModule('resource://gre/modules/Services.sys.mjs').Services;
   let current = null, serial = 0, lastProfile = null, layer = null, pane = null, paneMarker = null;
   let shadowTarget = null, shadowMarker = null;
+  const edgeLayers = new Map(), edgeSamples = new Map();
   let redrawId = 0, fadeTimer = 0, destroyed = false, lastGeometry = '', lastError = '';
   const transports = new Map(), abort = new AbortController();
   const styleNode = document.createElementNS(html,'style');
@@ -73,6 +81,8 @@
     fadeTimer = 0;
     resize.disconnect();
     layer?.remove(); layer = null;
+    for (const canvas of edgeLayers.values()) canvas.remove();
+    edgeLayers.clear();
     if (pane) {
       if (paneMarker === null) pane.removeAttribute('data-halo-zen-layer');
       else pane.setAttribute('data-halo-zen-layer',paneMarker);
@@ -85,6 +95,7 @@
     clearShadowTarget();
     if (!layer) return;
     layer.style.opacity = '0';
+    for (const canvas of edgeLayers.values()) canvas.style.opacity = '0';
     if (fadeTimer) clearTimeout(fadeTimer);
     if (immediate) removeLayer();
     else fadeTimer = setTimeout(removeLayer,190);
@@ -112,7 +123,15 @@
   }
   function valid(data) {
     const p = data?.profile, n = p?.dim?.length;
+    const edgeKeys = ['opposite','oppositeDim','top','bottom','topDim','bottomDim'];
+    const anyEdge = edgeKeys.some(key=>p?.[key] !== undefined) || p?.across !== undefined;
+    const validEdges = !anyEdge || Number.isInteger(p?.across) && p.across>=2 && p.across<=256 &&
+      edgeKeys.every(key=>Array.isArray(p[key]) &&
+        p[key].length === (key==='opposite' ? n*4 : key==='oppositeDim' ? n :
+          ['top','bottom'].includes(key) ? p.across*4 : p.across) &&
+        p[key].every(v=>Number.isInteger(v)&&v>=0&&v<=255));
     return p?.v === 1 && Number.isInteger(p.seq) && p.seq >= 0 && ['left','right'].includes(p.side) &&
+      validEdges &&
       Number.isInteger(n) && n >= 2 && n <= 256 && Array.isArray(p.rgba) && p.rgba.length === n*4 &&
       [...p.rgba,...p.dim].every(v=>Number.isInteger(v)&&v>=0&&v<=255) &&
       Number.isFinite(p.height) && p.height>=1 && p.height<=32768 &&
@@ -120,6 +139,73 @@
       Number.isFinite(p.step) && p.step>0 && p.step<=32768 &&
       Number.isFinite(p.strength) && p.strength>=0 && p.strength<=100 &&
       Number.isFinite(p.fade) && p.fade>=0 && p.fade<=100;
+  }
+  function sampleCanvas(name,values,n,vertical,shade=false) {
+    let canvas = edgeSamples.get(name);
+    if (!canvas) {canvas=document.createElementNS(html,'canvas');edgeSamples.set(name,canvas);}
+    canvas.width=vertical?1:n;canvas.height=vertical?n:1;
+    const ctx=canvas.getContext('2d'),image=ctx.createImageData(canvas.width,canvas.height);
+    if (shade) for(let i=0;i<n;i++) image.data[i*4+3]=values[i];
+    else image.data.set(values);
+    ctx.putImageData(image,0,0);
+    return canvas;
+  }
+  function paintEdges(p,g) {
+    if (!p.opposite || !p.top || !p.bottom) return;
+    const app=document.getElementById('zen-appcontent-wrapper') || document.getElementById('zen-main-app-wrapper');
+    if (!app) return;
+    const box=app.getBoundingClientRect(),page=g.page;
+    const contentLeft=g.side==='left'?Math.max(box.left,g.box.right):box.left;
+    const contentRight=g.side==='right'?Math.min(box.right,g.box.left):box.right;
+    const separation=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zen-element-separation'));
+    const topHeight=Math.max(0,Math.min(24,Number.isFinite(separation)?separation:0,box.height));
+    const leftGap=page.left-contentLeft,rightGap=contentRight-page.right,bottomGap=box.bottom-page.bottom;
+    const leftWidth=leftGap>0&&leftGap<=64?leftGap:0;
+    const rightWidth=rightGap>0&&rightGap<=64?rightGap:0;
+    const bottomHeight=bottomGap>0&&bottomGap<=64?bottomGap:0;
+    const main=p.side==='left'?{left:p.rgba,leftDim:p.dim,right:p.opposite,rightDim:p.oppositeDim}:
+      {left:p.opposite,leftDim:p.oppositeDim,right:p.rgba,rightDim:p.dim};
+    const bands=[
+      {name:'top',x:contentLeft,y:box.top,w:contentRight-contentLeft,h:topHeight,vertical:false,rgba:p.top,dim:p.topDim,n:p.across},
+      {name:'bottom',x:contentLeft,y:page.bottom,w:contentRight-contentLeft,h:bottomHeight,vertical:false,rgba:p.bottom,dim:p.bottomDim,n:p.across},
+      {name:'left',x:contentLeft,y:box.top+topHeight,w:leftWidth,h:Math.max(0,page.bottom-box.top-topHeight),vertical:true,
+        rgba:main.left,dim:main.leftDim,n:p.dim.length},
+      {name:'right',x:page.right,y:box.top+topHeight,w:rightWidth,h:Math.max(0,page.bottom-box.top-topHeight),vertical:true,
+        rgba:main.right,dim:main.rightDim,n:p.dim.length}
+    ];
+    for (const band of bands) {
+      let target=edgeLayers.get(band.name);
+      if (band.w<.5 || band.h<.5) {target?.remove();edgeLayers.delete(band.name);continue;}
+      if (!target) {
+        target=document.createElementNS(html,'canvas');target.id=`halo-zen-edge-${band.name}`;
+        target.setAttribute('aria-hidden','true');
+        (document.getElementById('zen-main-app-wrapper')||document.documentElement).append(target);
+        edgeLayers.set(band.name,target);
+      }
+      Object.assign(target.style,{left:`${band.x}px`,top:`${band.y}px`,width:`${band.w}px`,height:`${band.h}px`,opacity:'1'});
+      const scale=Math.min(devicePixelRatio,2),w=Math.max(1,Math.ceil(band.w*scale)),h=Math.max(1,Math.ceil(band.h*scale));
+      if(target.width!==w)target.width=w;
+      if(target.height!==h)target.height=h;
+      const ctx=target.getContext('2d');ctx.clearRect(0,0,w,h);
+      const colour=sampleCanvas(`${band.name}-colour`,band.rgba,band.n,band.vertical);
+      const shade=sampleCanvas(`${band.name}-shade`,band.dim,band.n,band.vertical,true);
+      if (band.vertical) {
+        const sy=h/band.h,zoom=page.height/p.height;
+        const y=(page.top-band.y+(p.y0-p.step/2)*zoom)*sy,stripHeight=band.n*p.step*zoom*sy;
+        ctx.drawImage(shade,0,y,w,stripHeight);
+        ctx.globalAlpha=p.strength/100;ctx.drawImage(colour,0,y,w,stripHeight);
+      } else {
+        const sx=w/band.w,x=(page.left-band.x)*sx,stripWidth=page.width*sx;
+        const start=Math.max(0,x),end=Math.min(w,x+stripWidth);
+        if (start>0) {ctx.drawImage(shade,0,0,1,1,0,0,start,h);ctx.globalAlpha=p.strength/100;
+          ctx.drawImage(colour,0,0,1,1,0,0,start,h);ctx.globalAlpha=1;}
+        if (end>start) {ctx.drawImage(shade,x,0,stripWidth,h);ctx.globalAlpha=p.strength/100;
+          ctx.drawImage(colour,x,0,stripWidth,h);ctx.globalAlpha=1;}
+        if (end<w) {ctx.drawImage(shade,band.n-1,0,1,1,end,0,w-end,h);ctx.globalAlpha=p.strength/100;
+          ctx.drawImage(colour,band.n-1,0,1,1,end,0,w-end,h);}
+      }
+      ctx.globalAlpha=1;
+    }
   }
   function paint() {
     const packet = lastProfile, g = geometry();
@@ -155,6 +241,7 @@
     fade.addColorStop(1,`rgba(0,0,0,${g.side==='left'?near:far})`);
     ctx.fillStyle=fade;ctx.fillRect(0,0,w,h);
     ctx.globalCompositeOperation='source-over';
+    paintEdges(p,g);
   }
   // Original frame bridge. It reads only Halo's bounded numerical profile.
   // Page-provided strings are never executed or injected as CSS/URLs.
@@ -248,7 +335,8 @@
   }
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
-      error:lastError,version:'0.1.2'})});
+      edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
+      error:lastError,version:'0.1.3'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);

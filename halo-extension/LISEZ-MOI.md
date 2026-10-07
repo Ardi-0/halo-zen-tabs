@@ -106,7 +106,7 @@ Les images sont échantillonnées par `requestVideoFrameCallback` quand disponib
 
 ## Source
 
-`zen-bridge.js` : export optionnel de la bande de couleurs, uniquement pour un complément connecté. Le dossier séparé `halo-zen-tabs` contient le script d’interface Sine, son format de mod, ses préférences et l’installateur local.
+`zen-bridge.js` : export optionnel de petites bandes de couleurs sur les quatre bords du halo, uniquement pour un complément connecté. Le dossier séparé `halo-zen-tabs` contient le script d’interface Sine, son format de mod, ses préférences et l’installateur local.
 
 `settings.js` : valeurs initiales et validation des réglages. `site.js` : détection du lecteur et intégration au défilement de YouTube ou Twitch. `projection.js` : projection des quatre bords et des coins, géométrie et détection des bandes. `blur.js` : flous par côté et raccords, sur la surface de rendu limitée à la zone utile. `twitch-surfaces.js` : repérage des couches structurelles opaques et restitution de leurs styles. `content.js` : capture, lissage et cycle de vie. `content.css` : styles de compatibilité réversibles. `popup.html`, `popup.css`, `popup.js` : panneau de réglages.
 

@@ -8,6 +8,8 @@ Tests automatisés dans Chrome avec Playwright, sur des pages reproduisant la st
 
 ## Complément Zen / Sine
 
+La version 0.2.19 avec le mod Sine 0.1.3 transmet les couleurs des quatre bords pour couvrir les petites séparations natives autour de la vue web. `work/test-zen-tabs.cjs` simule des marges de 6 px en haut, à droite et en bas, et de 20 px à gauche. Il vérifie leurs pixels colorés, la continuité des couleurs, la position inchangée de la vue web, le fonctionnement des menus et le retrait complet des bandes au changement d’onglet ou à la désactivation. Le rendu dans le vrai profil Zen reste à vérifier.
+
 `work/test-zen-tabs.cjs` exécute l’extension et le script de production Halo Tabs dans un banc Chrome à deux contextes. Une iframe représente le contenu et les API `gBrowser`, `Services.prefs` et `messageManager` sont simulées. Le code de transport du complément est exécuté ; l’identité `content.top` est adaptée pour représenter un contenu de navigateur de premier niveau. Ce banc ne valide pas le moteur réel de Firefox ni le chargement par Sine.
 
 Onze groupes passent sans erreur : absence de bande exportée sans consommateur, liaison locale et géométrie inchangée des contrôles, couleurs rouge/bleu, réglages et menus, rejet des données malformées et des URI étrangères, changement d’onglet, désactivation via Halo/Sine, scroll en pause, sidebar à droite, raccord multicolore, échelle/décalage de la vue web, retrait complet des marqueurs et du canvas. Les raccords comparés sur un fond commun restent sous huit niveaux par canal sur 255, également avec les voiles uniforme et local à 25 %. La capture `work/zen-tabs-preview.png` est une démonstration synthétique.
