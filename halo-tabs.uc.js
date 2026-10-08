@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.10
+// @version        0.1.11
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
   'use strict';
   if (!window.gBrowser) return;
   window.HaloZenTabs?.destroy();
-  const messageName = 'halo-zen:profile-v1', controlName = 'halo-zen:control-v1', ackName = 'halo-zen:ack-v1';
+  const messageName = 'halo-zen:profile-v1', controlName = 'halo-zen:control-v1';
+  const ackName = 'halo-zen:ack-v1', scrollName = 'halo-zen:scroll-v1';
   const owner = window.crypto.randomUUID();
   const enabledPref = 'uc.halo-zen-tabs.enabled';
   const html = 'http://www.w3.org/1999/xhtml';
@@ -37,6 +38,7 @@
   let shadowTarget = null, shadowMarker = null;
   const edgeLayers = new Map(), edgeSamples = new Map();
   let redrawId = 0, fadeTimer = 0, destroyed = false, lastGeometry = '', lastError = '';
+  let latestScrollY = 0, latestScrollAt = -1;
   const transports = new Map(), abort = new AbortController();
   const styleNode = document.createElementNS(html,'style');
   styleNode.id = 'halo-zen-tabs-style'; styleNode.textContent = styles;
@@ -133,6 +135,8 @@
           ['top','bottom'].includes(key) ? p.across*4 : p.across) &&
         p[key].every(v=>Number.isInteger(v)&&v>=0&&v<=255));
     return p?.v === 1 && Number.isInteger(p.seq) && p.seq >= 0 && ['left','right'].includes(p.side) &&
+      (p.scrollY === undefined || Number.isFinite(p.scrollY) && p.scrollY >= 0 && p.scrollY <= 1e8) &&
+      (p.at === undefined || Number.isFinite(p.at) && p.at >= 0) &&
       validEdges &&
       Number.isInteger(n) && n >= 2 && n <= 256 && Array.isArray(p.rgba) && p.rgba.length === n*4 &&
       [...p.rgba,...p.dim].every(v=>Number.isInteger(v)&&v>=0&&v<=255) &&
@@ -199,7 +203,8 @@
       const shade=sampleCanvas(`${band.name}-shade`,band.dim,band.n,band.vertical,true);
       if (band.vertical) {
         const sy=h/band.h,zoom=page.height/p.height;
-        const y=(page.top-band.y+(p.y0-p.step/2)*zoom)*sy,stripHeight=band.n*p.step*zoom*sy;
+        const shift=Number.isFinite(p.scrollY)?latestScrollY-p.scrollY:0;
+        const y=(page.top-band.y+(p.y0-p.step/2-shift)*zoom)*sy,stripHeight=band.n*p.step*zoom*sy;
         ctx.drawImage(shade,0,y,w,stripHeight);
         ctx.drawImage(colour,0,y,w,stripHeight);
       } else {
@@ -246,7 +251,8 @@
     for(let i=0;i<n;i++)dark.data[i*4+3]=p.dim[i];
     lc.putImageData(light,0,0);dc.putImageData(dark,0,0);
     const sy=h/g.box.height, zoom=g.page.height/p.height;
-    const y=(g.page.top-g.box.top+(p.y0-p.step/2)*zoom)*sy, height=n*p.step*zoom*sy;
+    const shift=Number.isFinite(p.scrollY)?latestScrollY-p.scrollY:0;
+    const y=(g.page.top-g.box.top+(p.y0-p.step/2-shift)*zoom)*sy, height=n*p.step*zoom*sy;
     ctx.drawImage(darkStrip,0,y,w,height);ctx.drawImage(lightStrip,0,y,w,height);
     ctx.globalCompositeOperation='destination-in';
     // Keep the page-side edge exact. The intensity setting still shapes most
@@ -266,12 +272,13 @@
   // Page-provided strings are never executed or injected as CSS/URLs.
   function frameBridge() {
     if(content!==content.top)return;
-    const control='halo-zen:control-v1',message='halo-zen:profile-v1',ack='halo-zen:ack-v1';
+    const control='halo-zen:control-v1',message='halo-zen:profile-v1';
+    const ack='halo-zen:ack-v1',scroll='halo-zen:scroll-v1';
     const scope=globalThis;
     if(scope.__haloZenFrameV1)return;
     scope.__haloZenFrameV1=true;
     let state=null,doc=null,observer=null,previous='',hidden=false;
-    let awaiting=0,pending=null,watchdog=0;
+    let awaiting=0,pending=null,watchdog=0,scrollFrame=0,lastScrollY=-1;
     function allowed() {
       try{return content===content.top && content.location.protocol==='https:' &&
         ['www.youtube.com','www.twitch.tv'].includes(content.location.hostname);}catch{return false;}
@@ -339,19 +346,34 @@
     addEventListener('pageshow',()=>{hidden=false;attach();},true);
     addEventListener('popstate',()=>attach(),true);
     addEventListener('yt-navigate-finish',()=>attach(),true);
+    content.addEventListener('scroll',()=>{
+      if(!state?.enabled||hidden||content.location.hostname!=='www.youtube.com'||scrollFrame)return;
+      scrollFrame=content.requestAnimationFrame(()=>{
+        scrollFrame=0;
+        const y=content.scrollY;
+        if(y===lastScrollY||!state?.enabled)return;
+        lastScrollY=y;
+        try{sendAsyncMessage(scroll,{owner:state.owner,id:state.id,uri:content.location.href,
+          scrollY:y,at:content.performance.now()});}catch{}
+      });
+    },true);
     addEventListener('pagehide',()=>{hidden=true;send();detach();},true);
   }
   const frameURI='data:application/javascript;charset=utf-8,'+encodeURIComponent(`(${frameBridge.toString()})();`);
   function selectBrowser() {
     if(destroyed)return;
     if(current){try{current.manager.sendAsyncMessage(controlName,{v:1,owner,id:current.id,enabled:false});}catch{}}
-    current=null;lastGeometry='';hide(!enabled());
+    current=null;lastGeometry='';latestScrollY=0;latestScrollAt=-1;hide(!enabled());
     const browser=gBrowser.selectedBrowser;
     if(!enabled()||!eligible(browser))return;
     const manager=browser.messageManager||browser.frameLoader?.messageManager;
     if(!manager?.loadFrameScript||!manager?.addMessageListener){lastError='Content bridge unavailable in this Zen version';return;}
     const old=transports.get(browser);
-    if(old&&old.manager!==manager){try{old.manager.removeMessageListener(messageName,old.listener);}catch{}transports.delete(browser);}
+    if(old&&old.manager!==manager){
+      try{old.manager.removeMessageListener(messageName,old.listener);
+        old.manager.removeMessageListener(scrollName,old.scrollListener);}catch{}
+      transports.delete(browser);
+    }
     if(!transports.has(browser)) {
       const listener={receiveMessage(data){
         const packet=data.data;
@@ -360,6 +382,10 @@
             packet.uri!==browser.currentURI.spec)return;
           if(!valid(packet)){hide();return;}
           if(lastProfile && packet.profile.seq <= lastProfile.profile.seq)return;
+          const profile=packet.profile;
+          if(Number.isFinite(profile.scrollY)&&Number.isFinite(profile.at)&&profile.at>=latestScrollAt){
+            latestScrollY=profile.scrollY;latestScrollAt=profile.at;
+          }
           // Paint on receipt, then acknowledge. If chrome falls behind, the
           // content process skips queued intermediate frames.
           lastProfile=packet;paint();
@@ -370,7 +396,18 @@
           }
         }
       }};
-      manager.addMessageListener(messageName,listener);transports.set(browser,{manager,listener});
+      const scrollListener={receiveMessage(data){
+        const packet=data.data;
+        if(!current||current.browser!==browser||packet?.owner!==owner||packet.id!==current.id||
+          packet.uri!==browser.currentURI.spec||!lastProfile?.profile||
+          !Number.isFinite(lastProfile.profile.scrollY)||!Number.isFinite(packet.scrollY)||
+          packet.scrollY<0||packet.scrollY>1e8||!Number.isFinite(packet.at)||packet.at<latestScrollAt)return;
+        if(packet.scrollY===latestScrollY)return;
+        latestScrollY=packet.scrollY;latestScrollAt=packet.at;queueDraw();
+      }};
+      manager.addMessageListener(messageName,listener);
+      manager.addMessageListener(scrollName,scrollListener);
+      transports.set(browser,{manager,listener,scrollListener});
     }
     current={browser,manager,id:++serial};
     try{manager.loadFrameScript(frameURI,false);refreshGeometry();}
@@ -385,7 +422,10 @@
     if(destroyed)return;
     destroyed=true;
     if(current){try{current.manager.sendAsyncMessage(controlName,{v:1,owner,id:current.id,enabled:false});}catch{}}
-    for(const {manager,listener} of transports.values()){try{manager.removeMessageListener(messageName,listener);}catch{}}
+    for(const {manager,listener,scrollListener} of transports.values()){
+      try{manager.removeMessageListener(messageName,listener);
+        manager.removeMessageListener(scrollName,scrollListener);}catch{}
+    }
     transports.clear();clearInterval(reconnect);abort.abort();removeLayer();styleNode.remove();
     if(redrawId)cancelAnimationFrame(redrawId);
     gBrowser.removeTabsProgressListener?.(progress);
@@ -395,12 +435,13 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.10'})});
+      error:lastError,version:'0.1.11'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
     if(current?.browser===browser){try{current.manager.sendAsyncMessage(controlName,{v:1,owner,id:current.id,enabled:false});}catch{}current=null;hide();}
-    if(entry){try{entry.manager.removeMessageListener(messageName,entry.listener);}catch{}transports.delete(browser);}
+    if(entry){try{entry.manager.removeMessageListener(messageName,entry.listener);
+      entry.manager.removeMessageListener(scrollName,entry.scrollListener);}catch{}transports.delete(browser);}
   },{signal:abort.signal});
   gBrowser.addTabsProgressListener?.(progress);
   services.prefs.addObserver(enabledPref,prefsObserver);
