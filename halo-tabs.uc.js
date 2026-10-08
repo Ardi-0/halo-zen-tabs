@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.9
+// @version        0.1.10
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -113,12 +113,12 @@
   }
   function queueDraw() { if (!redrawId) redrawId=requestAnimationFrame(()=>{redrawId=0;refreshGeometry();paint();}); }
   const resize = new ResizeObserver(queueDraw);
-  function refreshGeometry() {
+  function refreshGeometry(force=false) {
     if (!current || !enabled()) return;
     const g = geometry();
     if (!g) { hide(); return; }
     const key = JSON.stringify([g.side,g.edge,g.box.x,g.box.y,g.box.width,g.box.height,g.page.x,g.page.y,g.page.width,g.page.height]);
-    if (key !== lastGeometry) {
+    if (force || key !== lastGeometry) {
       lastGeometry = key;
       current.manager.sendAsyncMessage(controlName,{v:1,enabled:true,owner,id:current.id,side:g.side,edge:g.edge});
     }
@@ -145,7 +145,9 @@
   function sampleCanvas(name,values,n,vertical,shade=false) {
     let canvas = edgeSamples.get(name);
     if (!canvas) {canvas=document.createElementNS(html,'canvas');edgeSamples.set(name,canvas);}
-    canvas.width=vertical?1:n;canvas.height=vertical?n:1;
+    const width=vertical?1:n,height=vertical?n:1;
+    if(canvas.width!==width)canvas.width=width;
+    if(canvas.height!==height)canvas.height=height;
     const ctx=canvas.getContext('2d'),image=ctx.createImageData(canvas.width,canvas.height);
     if (shade) for(let i=0;i<n;i++) image.data[i*4+3]=values[i];
     else image.data.set(values);
@@ -230,9 +232,14 @@
       width:`${g.box.width}px`,height:`${g.box.height}px`,opacity:'1'});
     const w=Math.max(1,Math.min(512,Math.round(g.box.width*devicePixelRatio)));
     const h=Math.max(1,Math.min(2048,Math.round(g.box.height*devicePixelRatio)));
-    layer.width=w;layer.height=h;
+    if(layer.width!==w)layer.width=w;
+    if(layer.height!==h)layer.height=h;
     const p=packet.profile,n=p.dim.length,ctx=layer.getContext('2d');
-    lightStrip.width=darkStrip.width=1;lightStrip.height=darkStrip.height=n;
+    ctx.clearRect(0,0,w,h);
+    if(lightStrip.width!==1)lightStrip.width=1;
+    if(darkStrip.width!==1)darkStrip.width=1;
+    if(lightStrip.height!==n)lightStrip.height=n;
+    if(darkStrip.height!==n)darkStrip.height=n;
     const lc=lightStrip.getContext('2d'),dc=darkStrip.getContext('2d');
     const light=lc.createImageData(1,n),dark=dc.createImageData(1,n);
     light.data.set(p.rgba);
@@ -330,6 +337,8 @@
     });
     addEventListener('DOMContentLoaded',()=>attach(),true);
     addEventListener('pageshow',()=>{hidden=false;attach();},true);
+    addEventListener('popstate',()=>attach(),true);
+    addEventListener('yt-navigate-finish',()=>attach(),true);
     addEventListener('pagehide',()=>{hidden=true;send();detach();},true);
   }
   const frameURI='data:application/javascript;charset=utf-8,'+encodeURIComponent(`(${frameBridge.toString()})();`);
@@ -368,12 +377,16 @@
     catch(error){lastError=error.message;hide(true);}
   }
   const progress={onLocationChange(browser,webProgress){if(browser===gBrowser.selectedBrowser&&webProgress?.isTopLevel!==false)selectBrowser();}};
+  // A content process can miss its first control packet while a new page is
+  // loading. Retry only until the first profile arrives; normal frame updates
+  // remain event-driven and keep the existing acknowledgement backpressure.
+  const reconnect = setInterval(()=>{if(current&&!lastProfile)refreshGeometry(true);},2000);
   function destroy() {
     if(destroyed)return;
     destroyed=true;
     if(current){try{current.manager.sendAsyncMessage(controlName,{v:1,owner,id:current.id,enabled:false});}catch{}}
     for(const {manager,listener} of transports.values()){try{manager.removeMessageListener(messageName,listener);}catch{}}
-    transports.clear();abort.abort();removeLayer();styleNode.remove();
+    transports.clear();clearInterval(reconnect);abort.abort();removeLayer();styleNode.remove();
     if(redrawId)cancelAnimationFrame(redrawId);
     gBrowser.removeTabsProgressListener?.(progress);
     services.prefs.removeObserver(enabledPref,prefsObserver);
@@ -382,7 +395,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.9'})});
+      error:lastError,version:'0.1.10'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
