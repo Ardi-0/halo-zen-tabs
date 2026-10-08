@@ -3,6 +3,7 @@
   const api = globalThis.browser;
   const { normalize, defaults, bounds, siteKeys } = globalThis.HaloSettings;
   const $ = id => document.getElementById(id);
+  $('version').textContent = `Halora ${api.runtime.getManifest?.().version || ''}`.trim();
   const storageKeys = ['halo','haloSeparateSites','haloYoutube','haloTwitch'];
   let shared = normalize(), profiles = { youtube:normalize(), twitch:normalize() };
   let profileStored = { youtube:false, twitch:false }, separate = false, selectedSite = 'youtube';

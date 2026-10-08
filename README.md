@@ -4,7 +4,9 @@
 
 Halora extends colors from YouTube and Twitch video edges into the page while preserving Zen Browser's transparency. This [Sine](https://github.com/CosmoCreeper/Sine) mod continues that light behind Zen's tabs, matching the page edge and fading toward the outer edge of the sidebar.
 
-The Firefox extension and Sine mod work together: the extension samples the video and renders the page halo; the mod renders the matching light in Zen's interface.
+The Firefox extension and Sine mod work together: the extension samples the video and renders the page halo; the mod renders the matching light in Zen's interface. The extension also works without the Sine mod; only the light behind Zen's tabs is missing.
+
+The source for the installable Firefox add-on is in [`halo-extension/`](halo-extension/). Its [release checklist](PUBLISHING.md) covers validation, packaging, and Mozilla signing. The Sine mod stays at the repository root so Sine can install it directly.
 
 ## Install
 

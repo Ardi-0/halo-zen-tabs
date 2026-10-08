@@ -1,13 +1,13 @@
 {
   "manifest_version": 2,
   "name": "Halora — Video Light for Zen",
-  "version": "0.2.26",
+  "version": "0.2.27",
   "description": "Extend YouTube and Twitch video edges into a blurred glow, with adjustable transparency and page dimming.",
   "permissions": ["storage", "https://www.youtube.com/*", "https://www.twitch.tv/*"],
   "browser_specific_settings": {
     "gecko": {
       "id": "halo-transparent@local.extension",
-      "strict_min_version": "140.0",
+      "strict_min_version": "142.0",
       "data_collection_permissions": { "required": ["none"] }
     }
   },

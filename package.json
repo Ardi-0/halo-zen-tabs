@@ -1,0 +1,15 @@
+{
+  "name": "halora",
+  "private": true,
+  "version": "0.2.27",
+  "description": "Firefox extension and Zen Browser Sine companion for video edge lighting",
+  "scripts": {
+    "lint": "web-ext lint --source-dir halo-extension",
+    "build": "python scripts/build-extension.py",
+    "test": "node --test tests/*.test.cjs",
+    "check": "npm run lint && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "web-ext": "10.7.0"
+  }
+}

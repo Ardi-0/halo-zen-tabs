@@ -2,7 +2,11 @@
 
 Halora is a Firefox extension for Zen Browser that draws a live, blurred halo from the edges of YouTube videos and Twitch streams. It preserves Zen's transparent background. You can leave the page fully transparent or dim it by a chosen amount.
 
-## Install temporarily
+## Install and develop
+
+The source files in this directory are the Firefox add-on. From the repository root, run `npm ci` and `npm run check` to validate the add-on and create `dist/halora-<version>-unsigned.zip`. The ZIP contains only the 13 files needed by the browser; repository documentation, tests, the Sine mod, and build dependencies stay out of it. See the [release checklist](../PUBLISHING.md) before submitting it to Mozilla for signing.
+
+### Temporary development installation
 
 1. Keep Zen's transparency enabled with your usual theme.
 2. Open `about:debugging#/runtime/this-firefox` in Zen.
@@ -10,7 +14,7 @@ Halora is a Firefox extension for Zen Browser that draws a live, blurred halo fr
 4. Reload any YouTube or Twitch tabs that were already open, then start a video or stream.
 5. Open the Halora toolbar popup to adjust the effect. Changes apply immediately and are saved locally.
 
-This build is unsigned. Temporary add-ons must be loaded again after a Zen restart. A signed Firefox add-on is needed for a persistent installation; no browser security preference needs to be disabled. See [Mozilla's temporary installation guide](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/).
+Temporary add-ons must be loaded again after a Zen restart. A Mozilla-signed add-on is needed for a persistent installation; no browser security preference needs to be disabled. See [Mozilla's temporary installation guide](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/).
 
 ## Controls
 
@@ -32,4 +36,4 @@ The halo remains anchored to the player's location in the page as you scroll and
 
 Video frames are processed locally for color sampling and are never stored or sent to a remote service. Settings are stored in `browser.storage.local`; only an explicit export creates a JSON file. Some protected video streams block pixel sampling; Halora shows a warning in that case. The optional Sine mod receives only compact edge-color data inside Zen.
 
-The add-on's internal ID and setting keys remain stable across the Halora rename, preserving existing preferences. See [validation notes](VALIDATION.md) for automated coverage and limits. Licensed under [MIT](LICENSE).
+The add-on's internal ID and setting keys remain stable across the Halora rename, preserving existing preferences. The minimum supported Firefox engine is 142; Zen 1.23.1b uses Gecko 157. See [validation notes](VALIDATION.md) for automated coverage and limits. Licensed under [MIT](LICENSE).
