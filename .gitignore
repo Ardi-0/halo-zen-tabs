@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.zip
 *.xpi
+
+# Keep only the public README in this repository.
+*.md
+!README.md

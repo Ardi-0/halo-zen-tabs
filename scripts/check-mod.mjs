@@ -16,7 +16,7 @@ assert.deepEqual(Object.keys(theme.scripts), ['halo-tabs.uc.js']);
 assert.deepEqual(theme.scripts['halo-tabs.uc.js'].include, ['chrome://browser/content/browser.xhtml']);
 assert.equal(preferences.find(pref => pref.property === 'uc.halo-zen-tabs.enabled')?.type, 'checkbox');
 
-for (const name of ['halo-tabs.uc.js', 'README.md', 'LICENSE', 'icon.svg', 'PRIVACY.md']) {
+for (const name of ['halo-tabs.uc.js', 'README.md', 'LICENSE', 'icon.svg']) {
   assert.ok(existsSync(resolve(root, name)), `Missing ${name}`);
 }
 assert.ok(!existsSync(resolve(root, 'halo-extension')), 'Firefox extension files belong in a separate repository');
