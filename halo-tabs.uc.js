@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.11
+// @version        0.1.12
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -39,6 +39,7 @@
   const edgeLayers = new Map(), edgeSamples = new Map();
   let redrawId = 0, fadeTimer = 0, destroyed = false, lastGeometry = '', lastError = '';
   let latestScrollY = 0, latestScrollAt = -1;
+  let paintedSeq = -1, paintedGeometry = '';
   const transports = new Map(), abort = new AbortController();
   const styleNode = document.createElementNS(html,'style');
   styleNode.id = 'halo-zen-tabs-style'; styleNode.textContent = styles;
@@ -92,6 +93,7 @@
       else pane.setAttribute('data-halo-zen-layer',paneMarker);
     }
     pane = null; paneMarker = null;
+    paintedSeq = -1; paintedGeometry = '';
     clearShadowTarget();
   }
   function hide(immediate=false) {
@@ -113,11 +115,12 @@
     const edge = Math.max(0,Math.min(1,((side === 'left' ? box.right : box.left)-page.left)/page.width));
     return {target,box,page,side,edge};
   }
-  function queueDraw() { if (!redrawId) redrawId=requestAnimationFrame(()=>{redrawId=0;refreshGeometry();paint();}); }
+  function queueDraw() { if (!redrawId) redrawId=requestAnimationFrame(()=>{
+    redrawId=0;const g=geometry();refreshGeometry(false,g);paint(g);
+  }); }
   const resize = new ResizeObserver(queueDraw);
-  function refreshGeometry(force=false) {
+  function refreshGeometry(force=false,g=geometry()) {
     if (!current || !enabled()) return;
-    const g = geometry();
     if (!g) { hide(); return; }
     const key = JSON.stringify([g.side,g.edge,g.box.x,g.box.y,g.box.width,g.box.height,g.page.x,g.page.y,g.page.width,g.page.height]);
     if (force || key !== lastGeometry) {
@@ -146,10 +149,11 @@
       Number.isFinite(p.strength) && p.strength>=0 && p.strength<=100 &&
       Number.isFinite(p.fade) && p.fade>=0 && p.fade<=100;
   }
-  function sampleCanvas(name,values,n,vertical,shade=false) {
+  function sampleCanvas(name,values,n,vertical,shade=false,refresh=true) {
     let canvas = edgeSamples.get(name);
     if (!canvas) {canvas=document.createElementNS(html,'canvas');edgeSamples.set(name,canvas);}
     const width=vertical?1:n,height=vertical?n:1;
+    if (!refresh && canvas.width===width && canvas.height===height) return canvas;
     if(canvas.width!==width)canvas.width=width;
     if(canvas.height!==height)canvas.height=height;
     const ctx=canvas.getContext('2d'),image=ctx.createImageData(canvas.width,canvas.height);
@@ -158,7 +162,7 @@
     ctx.putImageData(image,0,0);
     return canvas;
   }
-  function paintEdges(p,g) {
+  function paintEdges(p,g,refresh) {
     if (!p.opposite || !p.top || !p.bottom) return;
     const app=document.getElementById('zen-appcontent-wrapper') || document.getElementById('zen-main-app-wrapper');
     if (!app) return;
@@ -185,6 +189,7 @@
         rgba:main.right,dim:main.rightDim,n:p.dim.length}
     ];
     for (const band of bands) {
+      if (!refresh && !band.vertical) continue;
       let target=edgeLayers.get(band.name);
       if (band.w<.5 || band.h<.5) {target?.remove();edgeLayers.delete(band.name);continue;}
       if (!target) {
@@ -199,8 +204,8 @@
       if(target.height!==h)target.height=h;
       const ctx=target.getContext('2d');ctx.clearRect(0,0,w,h);
       if (!p.strength) continue;
-      const colour=sampleCanvas(`${band.name}-colour`,band.rgba,band.n,band.vertical);
-      const shade=sampleCanvas(`${band.name}-shade`,band.dim,band.n,band.vertical,true);
+      const colour=sampleCanvas(`${band.name}-colour`,band.rgba,band.n,band.vertical,false,refresh);
+      const shade=sampleCanvas(`${band.name}-shade`,band.dim,band.n,band.vertical,true,refresh);
       if (band.vertical) {
         const sy=h/band.h,zoom=page.height/p.height;
         const shift=Number.isFinite(p.scrollY)?latestScrollY-p.scrollY:0;
@@ -220,8 +225,8 @@
       ctx.globalAlpha=1;
     }
   }
-  function paint() {
-    const packet = lastProfile, g = geometry();
+  function paint(g=geometry()) {
+    const packet = lastProfile;
     if (!packet || !g || packet.profile.side !== g.side) return;
     if (fadeTimer) {clearTimeout(fadeTimer);fadeTimer=0;}
     if (pane !== g.target || !layer) {
@@ -237,6 +242,9 @@
       width:`${g.box.width}px`,height:`${g.box.height}px`,opacity:'1'});
     const w=Math.max(1,Math.min(512,Math.round(g.box.width*devicePixelRatio)));
     const h=Math.max(1,Math.min(2048,Math.round(g.box.height*devicePixelRatio)));
+    const geometryKey=JSON.stringify([g.box.x,g.box.y,g.box.width,g.box.height,
+      g.page.x,g.page.y,g.page.width,g.page.height]);
+    const refresh=packet.profile.seq!==paintedSeq||geometryKey!==paintedGeometry;
     if(layer.width!==w)layer.width=w;
     if(layer.height!==h)layer.height=h;
     const p=packet.profile,n=p.dim.length,ctx=layer.getContext('2d');
@@ -245,11 +253,13 @@
     if(darkStrip.width!==1)darkStrip.width=1;
     if(lightStrip.height!==n)lightStrip.height=n;
     if(darkStrip.height!==n)darkStrip.height=n;
-    const lc=lightStrip.getContext('2d'),dc=darkStrip.getContext('2d');
-    const light=lc.createImageData(1,n),dark=dc.createImageData(1,n);
-    light.data.set(p.rgba);
-    for(let i=0;i<n;i++)dark.data[i*4+3]=p.dim[i];
-    lc.putImageData(light,0,0);dc.putImageData(dark,0,0);
+    if (refresh) {
+      const lc=lightStrip.getContext('2d'),dc=darkStrip.getContext('2d');
+      const light=lc.createImageData(1,n),dark=dc.createImageData(1,n);
+      light.data.set(p.rgba);
+      for(let i=0;i<n;i++)dark.data[i*4+3]=p.dim[i];
+      lc.putImageData(light,0,0);dc.putImageData(dark,0,0);
+    }
     const sy=h/g.box.height, zoom=g.page.height/p.height;
     const shift=Number.isFinite(p.scrollY)?latestScrollY-p.scrollY:0;
     const y=(g.page.top-g.box.top+(p.y0-p.step/2-shift)*zoom)*sy, height=n*p.step*zoom*sy;
@@ -266,7 +276,8 @@
     }
     ctx.fillStyle=fade;ctx.fillRect(0,0,w,h);
     ctx.globalCompositeOperation='source-over';
-    paintEdges(p,g);
+    paintEdges(p,g,refresh);
+    paintedSeq=p.seq;paintedGeometry=geometryKey;
   }
   // Original frame bridge. It reads only Halo's bounded numerical profile.
   // Page-provided strings are never executed or injected as CSS/URLs.
@@ -388,7 +399,8 @@
           }
           // Paint on receipt, then acknowledge. If chrome falls behind, the
           // content process skips queued intermediate frames.
-          lastProfile=packet;paint();
+          lastProfile=packet;
+          if (!redrawId) paint();
         }catch(error){lastError=error.message;hide();}
         finally{
           if(packet?.owner===owner&&Number.isInteger(packet.profile?.seq)){
@@ -435,7 +447,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.11'})});
+      error:lastError,version:'0.1.12'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
