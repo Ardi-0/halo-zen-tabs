@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.8
+// @version        0.1.9
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
   'use strict';
   if (!window.gBrowser) return;
   window.HaloZenTabs?.destroy();
-  const messageName = 'halo-zen:profile-v1', controlName = 'halo-zen:control-v1';
+  const messageName = 'halo-zen:profile-v1', controlName = 'halo-zen:control-v1', ackName = 'halo-zen:ack-v1';
   const owner = window.crypto.randomUUID();
   const enabledPref = 'uc.halo-zen-tabs.enabled';
   const html = 'http://www.w3.org/1999/xhtml';
@@ -259,18 +259,37 @@
   // Page-provided strings are never executed or injected as CSS/URLs.
   function frameBridge() {
     if(content!==content.top)return;
-    const control='halo-zen:control-v1',message='halo-zen:profile-v1';
+    const control='halo-zen:control-v1',message='halo-zen:profile-v1',ack='halo-zen:ack-v1';
     const scope=globalThis;
     if(scope.__haloZenFrameV1)return;
     scope.__haloZenFrameV1=true;
     let state=null,doc=null,observer=null,previous='',hidden=false;
+    let awaiting=0,pending=null,watchdog=0;
     function allowed() {
       try{return content===content.top && content.location.protocol==='https:' &&
         ['www.youtube.com','www.twitch.tv'].includes(content.location.hostname);}catch{return false;}
     }
+    function flush() {
+      if(!state||awaiting||!pending)return;
+      const next=pending;pending=null;awaiting=next.profile.seq;
+      content.clearTimeout(watchdog);
+      // A lost acknowledgement must not freeze the sidebar forever. While
+      // playing, a newer pending frame replaces this one after the timeout.
+      watchdog=content.setTimeout(()=>{watchdog=0;awaiting=0;flush();},250);
+      try{sendAsyncMessage(message,next);}
+      catch{content.clearTimeout(watchdog);watchdog=0;awaiting=0;pending||=next;}
+    }
     function send(profile=null) {
       if(!state)return;
-      sendAsyncMessage(message,{owner:state.owner,id:state.id,uri:content.location.href,profile});
+      if(!profile){
+        pending=null;awaiting=0;content.clearTimeout(watchdog);watchdog=0;
+        try{sendAsyncMessage(message,{owner:state.owner,id:state.id,uri:content.location.href,profile:null});}catch{}
+        return;
+      }
+      // Only one profile is in flight; intermediate video frames are replaced
+      // by the newest one instead of forming an ever-growing IPC queue.
+      pending={owner:state.owner,id:state.id,uri:content.location.href,profile};
+      flush();
     }
     function sample() {
       if(!state||!state.enabled||!doc||hidden)return;
@@ -284,7 +303,7 @@
     function detach() {
       observer?.disconnect();observer=null;
       doc?.documentElement?.removeAttribute('data-halo-zen-consumer');
-      doc=null;previous='';
+      doc=null;previous='';pending=null;awaiting=0;content.clearTimeout(watchdog);watchdog=0;
     }
     function attach() {
       if(!state?.enabled||!allowed()){detach();send();return;}
@@ -304,6 +323,11 @@
       if(!['left','right'].includes(value.side)||!Number.isFinite(value.edge)||value.edge<0||value.edge>1)return;
       state=value;hidden=false;attach();
     });
+    addMessageListener(ack,data=>{
+      const value=data.data;
+      if(!state||value?.owner!==state.owner||value.id!==state.id||value.seq!==awaiting)return;
+      awaiting=0;content.clearTimeout(watchdog);watchdog=0;flush();
+    });
     addEventListener('DOMContentLoaded',()=>attach(),true);
     addEventListener('pageshow',()=>{hidden=false;attach();},true);
     addEventListener('pagehide',()=>{hidden=true;send();detach();},true);
@@ -321,13 +345,21 @@
     if(old&&old.manager!==manager){try{old.manager.removeMessageListener(messageName,old.listener);}catch{}transports.delete(browser);}
     if(!transports.has(browser)) {
       const listener={receiveMessage(data){
-        if(!current||current.browser!==browser||data.data?.owner!==owner||data.data?.id!==current.id||!eligible(browser)||
-          data.data.uri!==browser.currentURI.spec)return;
-        if(!valid(data.data)){hide();return;}
-        if(lastProfile && data.data.profile.seq < lastProfile.profile.seq)return;
-        // The content process already rendered this frame. Paint on receipt;
-        // waiting for another chrome animation frame visibly trails the page.
-        lastProfile=data.data;paint();
+        const packet=data.data;
+        try{
+          if(!current||current.browser!==browser||packet?.owner!==owner||packet?.id!==current.id||!eligible(browser)||
+            packet.uri!==browser.currentURI.spec)return;
+          if(!valid(packet)){hide();return;}
+          if(lastProfile && packet.profile.seq <= lastProfile.profile.seq)return;
+          // Paint on receipt, then acknowledge. If chrome falls behind, the
+          // content process skips queued intermediate frames.
+          lastProfile=packet;paint();
+        }catch(error){lastError=error.message;hide();}
+        finally{
+          if(packet?.owner===owner&&Number.isInteger(packet.profile?.seq)){
+            try{manager.sendAsyncMessage(ackName,{owner:packet.owner,id:packet.id,seq:packet.profile.seq});}catch{}
+          }
+        }
       }};
       manager.addMessageListener(messageName,listener);transports.set(browser,{manager,listener});
     }
@@ -350,7 +382,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.8'})});
+      error:lastError,version:'0.1.9'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
