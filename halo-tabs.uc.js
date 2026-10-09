@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.12
+// @version        0.1.13
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -358,10 +358,14 @@
     addEventListener('popstate',()=>attach(),true);
     addEventListener('yt-navigate-finish',()=>attach(),true);
     content.addEventListener('scroll',()=>{
-      if(!state?.enabled||hidden||content.location.hostname!=='www.youtube.com'||scrollFrame)return;
+      if(!state?.enabled||hidden||scrollFrame)return;
+      const twitch=content.location.hostname==='www.twitch.tv';
+      if(!twitch&&content.location.hostname!=='www.youtube.com')return;
+      if(twitch&&!content.document.querySelector('[data-halo-zen-scroll-host]'))return;
       scrollFrame=content.requestAnimationFrame(()=>{
         scrollFrame=0;
-        const y=content.scrollY;
+        const y=twitch?content.document.querySelector('[data-halo-zen-scroll-host]')?.scrollTop:content.scrollY;
+        if(!Number.isFinite(y))return;
         if(y===lastScrollY||!state?.enabled)return;
         lastScrollY=y;
         try{sendAsyncMessage(scroll,{owner:state.owner,id:state.id,uri:content.location.href,
@@ -447,7 +451,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.12'})});
+      error:lastError,version:'0.1.13'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);
