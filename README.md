@@ -2,7 +2,7 @@
 
 <img src="icon.svg" alt="Halora icon" width="72" height="72">
 
-A [Sine](https://github.com/CosmoCreeper/Sine) mod that carries Halora's live video light from the web page into Zen Browser's tab sidebar. It preserves Zen's theme and transparency, and blends the light across the gap between the sidebar and the page.
+A [Sine](https://github.com/CosmoCreeper/Sine) mod that carries Halora's live video light from the web page into Zen Browser's tab sidebar. A small sampled colour grid follows the glow across the tabs and the gap to the page while preserving Zen's theme and transparency.
 
 This repository contains the **Zen mod only**. The [Halora Firefox extension](https://addons.mozilla.org/firefox/addon/halora-video-light-for-zen/) captures colors from YouTube videos and Twitch streams; the mod receives small color strips from that extension inside the browser. **The Firefox Add-ons link is a placeholder while the listing is under review.** The mod does not produce a halo on its own.
 
@@ -22,7 +22,7 @@ To turn it off, disable **Light up tabs** in Halora or disable this mod in Sine.
 
 ## Privacy and compatibility
 
-The extension processes video pixels locally without storing or transmitting frames, browsing history, or personal information to an external service. Settings stay in local extension storage; export creates a JSON file only when requested. When enabled, the mod receives compact, filtered edge-color strips and a dimming value inside Zen. It never receives full video frames or sends data to a server. Neither component uses an account, analytics, or an advertising network.
+The extension processes video pixels locally without storing or transmitting frames, browsing history, or personal information to an external service. Settings stay in local extension storage; export creates a JSON file only when requested. When enabled, the mod receives a compact sampled colour grid, edge strips, and dimming values inside Zen. It never receives full video frames or sends data to a server. Neither component uses an account, analytics, or an advertising network.
 
 The internal Sine ID remains `halo-zen-tabs` to preserve existing installations after the GitHub repository rename. This mod is licensed under [MIT](LICENSE). To report a problem, [open an issue](https://github.com/Ardi-0/halora-zen-tabs/issues) and mention your Zen and Sine versions.
 
