@@ -28,4 +28,4 @@ The internal Sine ID remains `halo-zen-tabs` to preserve existing installations 
 
 ## Development
 
-Run `node --check halo-tabs.uc.js` and `node scripts/check-mod.mjs` to validate the script and Sine metadata. GitHub Actions runs both checks on pushes and pull requests.
+Run `node --check halo-tabs.uc.js`, `node scripts/check-mod.mjs`, and `node --test tests/*.test.cjs` to validate the script, Sine metadata, and content bridge. GitHub Actions runs these checks on pushes and pull requests.

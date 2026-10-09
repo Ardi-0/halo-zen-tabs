@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Halora Tabs for Zen
 // @description    Optional transparent light layer behind Zen's native tabs
-// @version        0.1.14
+// @version        0.1.15
 // @include        chrome://browser/content/browser.xhtml
 // ==/UserScript==
 (() => {
@@ -384,7 +384,8 @@
       observer?.disconnect();
       observer=new content.MutationObserver(sample);
       observer.observe(doc.documentElement,{attributes:true,attributeFilter:['data-halo-zen-profile']});
-      doc.documentElement.setAttribute('data-halo-zen-consumer',JSON.stringify({v:1,side:state.side,edge:state.edge}));
+      doc.documentElement.setAttribute('data-halo-zen-consumer',JSON.stringify({v:1,side:state.side,edge:state.edge,
+        ...(state.span ? {span:state.span} : {})}));
       previous='';sample();
     }
     addMessageListener(control,data=>{
@@ -392,6 +393,8 @@
       if(value?.v!==1||!Number.isInteger(value.id)||typeof value.owner!=='string'||value.owner.length!==36)return;
       if(!value.enabled){if(state?.owner!==value.owner||state?.id!==value.id)return;detach();state=null;return;}
       if(!['left','right'].includes(value.side)||!Number.isFinite(value.edge)||value.edge<0||value.edge>1)return;
+      if(value.span!==undefined && (!Array.isArray(value.span)||value.span.length!==2||
+          !value.span.every(n=>Number.isFinite(n)&&n>=-2&&n<=3)||value.span[0]>=value.span[1]))return;
       state=value;hidden=false;attach();
     });
     addMessageListener(ack,data=>{
@@ -497,7 +500,7 @@
   window.HaloZenTabs=Object.freeze({destroy,refresh:selectBrowser,
     status:()=>({connected:!!current,visible:!!layer&&layer.style.opacity==='1',shadowCleared:!!shadowTarget,
       edgesVisible:[...edgeLayers.values()].some(canvas=>canvas.style.opacity==='1'),
-      error:lastError,version:'0.1.14'})});
+      error:lastError,version:'0.1.15'})});
   gBrowser.tabContainer.addEventListener('TabSelect',selectBrowser,{signal:abort.signal});
   gBrowser.tabContainer.addEventListener('TabClose',event=>{
     const browser=event.target.linkedBrowser,entry=transports.get(browser);

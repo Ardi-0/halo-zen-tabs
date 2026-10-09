@@ -14,3 +14,4 @@ jobs:
           node-version: '24'
       - run: node --check halo-tabs.uc.js
       - run: node scripts/check-mod.mjs
+      - run: node --test tests/*.test.cjs
